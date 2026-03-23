@@ -20,8 +20,8 @@ function useLocalStorageState(key, initialValueFactory) {
 
 // ─── PALETTE ───────────────────────────────────────────────────────────────
 const C = {
-  bg:"#080e14", gold:"#f0c040", green:"#40e080", red:"#f06060",
-  card:"rgba(255,255,255,0.04)", card2:"rgba(255,255,255,0.07)",
+  bg:"radial-gradient(circle at 40% 5%, #1f1a10 0%, #080e14 60%)", gold:"#f0c040", green:"#40e080", red:"#f06060",
+  card:"rgba(18, 22, 28, 0.4)", card2:"rgba(255,255,255,0.04)",
   border:"rgba(240,192,64,0.22)", borderGreen:"rgba(64,224,128,0.3)",
 };
 const font = "'Outfit', 'Twemoji Country Flags', 'Segoe UI Emoji', sans-serif";
@@ -144,7 +144,7 @@ const secBtn={
 };
 
 function Card({children,style}){
-  return React.createElement("div",{style:{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:16,...(style||{})}},children);
+  return React.createElement("div",{style:{background:C.card,backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",border:`1px solid rgba(240,192,64,0.12)`,boxShadow:"0 8px 32px 0 rgba(0,0,0,0.4)",borderRadius:12,padding:16,...(style||{})}},children);
 }
 function GoldTitle({children,sub}){
   return React.createElement("div",{style:{marginBottom:14}},
@@ -183,8 +183,8 @@ function MatchEntry({match,label,onChange,onConfirm,onEdit}){
   if(confirmed){
     return React.createElement("div",{style:{
       display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",
-      padding:"10px 14px",background:"rgba(64,224,128,0.05)",
-      border:`1px solid ${C.borderGreen}`,borderRadius:10,marginBottom:8,
+      padding:"10px 14px",background:"rgba(64,224,128,0.04)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
+      border:`1px solid ${C.borderGreen}`,boxShadow:"inset 0 0 10px rgba(64,224,128,0)",borderRadius:10,marginBottom:8,
     }},
       React.createElement("span",{style:{flex:1,fontSize:13,color:winner===t1?C.green:"#ccc",fontWeight:winner===t1?700:400,fontFamily:font}},t1||"—"),
       React.createElement("div",{style:{textAlign:"center",minWidth:70}},
@@ -196,7 +196,7 @@ function MatchEntry({match,label,onChange,onConfirm,onEdit}){
     );
   }
 
-  return React.createElement("div",{style:{padding:"12px 14px",background:C.card2,border:`1px solid ${C.border}`,borderRadius:10,marginBottom:8}},
+  return React.createElement("div",{style:{padding:"12px 14px",background:C.card2,backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:`1px solid rgba(255,255,255,0.06)`,boxShadow:"0 4px 16px 0 rgba(0,0,0,0.2)",borderRadius:10,marginBottom:8}},
     label&&React.createElement("div",{style:{fontSize:10,color:C.gold,letterSpacing:1.5,marginBottom:8,fontFamily:font}},label),
     React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
       React.createElement("span",{style:{flex:1,fontSize:13,color:"#e0d8c8",fontFamily:font,minWidth:90}},t1||"—"),
@@ -423,7 +423,7 @@ function GroupPanel({gk,gd,onUpdate}){
           table.map((row,i)=>{
             const dg=row.gf-row.gc;
             const q=allConfirmed&&i<2;
-            return React.createElement("tr",{key:row.team,style:{background:q?"rgba(64,224,128,0.07)":"transparent",borderBottom:"1px solid rgba(255,255,255,0.04)"}},
+            return React.createElement("tr",{key:row.team,style:{background:q?"rgba(64,224,128,0.07)":"transparent",backdropFilter:q?"blur(4px)":"none",WebkitBackdropFilter:q?"blur(4px)":"none",borderBottom:"1px solid rgba(255,255,255,0.04)"}},
               React.createElement("td",{style:{...tdBase,color:q?C.green:"#777",fontWeight:700}},i+1),
               React.createElement("td",{style:{...tdBase,textAlign:"left",color:"#e0d8c8",fontSize:12}},row.team),
               React.createElement("td",{style:tdBase},row.pj),
