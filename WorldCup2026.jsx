@@ -84,7 +84,7 @@ function makeGroupMatches(teams){
   return m;
 }
 
-function computeTable(teams,matches){
+function computeTable(teams,matches,tieBreakers={}){
   const s={};
   teams.forEach(t=>{s[t]={team:t,pj:0,gf:0,gc:0,pts:0};});
   matches.forEach(m=>{
@@ -101,7 +101,8 @@ function computeTable(teams,matches){
     if(b.pts!==a.pts)return b.pts-a.pts;
     const da=a.gf-a.gc,db=b.gf-b.gc;
     if(db!==da)return db-da;
-    return b.gf-a.gf;
+    if(b.gf!==a.gf)return b.gf-a.gf;
+    return (tieBreakers[b.team]||0)-(tieBreakers[a.team]||0);
   });
 }
 
@@ -397,8 +398,8 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
 
 // ─── PHASE 2 ───────────────────────────────────────────────────────────────
 function GroupPanel({gk,gd,onUpdate}){
-  const{teams,matches}=gd;
-  const table=computeTable(teams,matches);
+  const{teams,matches,tieBreakers}=gd;
+  const table=computeTable(teams,matches,tieBreakers);
   const allConfirmed=matches.every(m=>m.confirmed);
 
   function patch(idx,p){onUpdate({...gd,matches:matches.map((m,i)=>i===idx?{...m,...p}:m)});}
@@ -457,6 +458,62 @@ function GroupPanel({gk,gd,onUpdate}){
   );
 }
 
+function getLiveStandings(groupData){
+  const ranked={};
+  GROUP_KEYS.forEach(k=>{if(groupData[k])ranked[k]=computeTable(groupData[k].teams,groupData[k].matches,groupData[k].tieBreakers);});
+  const firsts=[], seconds=[], thirds=[];
+  GROUP_KEYS.forEach(k=>{
+    if(!ranked[k]) return;
+    if(ranked[k][0]) firsts.push({...ranked[k][0], group:k});
+    if(ranked[k][1]) seconds.push({...ranked[k][1], group:k});
+    if(ranked[k][2]) thirds.push({...ranked[k][2], group:k});
+  });
+  thirds.sort((a,b)=>{
+    if(b.pts!==a.pts)return b.pts-a.pts;
+    const da=a.gf-a.gc,db=b.gf-b.gc;
+    if(db!==da)return db-da;
+    if(b.gf!==a.gf)return b.gf-a.gf;
+    return groupData[b.group].tieBreakers[b.team]-groupData[a.group].tieBreakers[a.team];
+  });
+  return {firsts, seconds, thirds};
+}
+
+function LivePanel({groupData}) {
+  const {firsts,seconds,thirds} = getLiveStandings(groupData);
+  return React.createElement(Card,{style:{maxHeight:"80vh",overflowY:"auto",padding:"16px 20px"}},
+    React.createElement(GoldTitle,null,"🏆 Clasificación en Tiempo Real"),
+    React.createElement("div",{style:{display:"flex",gap:16,marginBottom:16}},
+      React.createElement("div",{style:{flex:1}},
+        React.createElement(MiniLabel,null,"1ros LUGARES"),
+        firsts.map(t=>React.createElement("div",{key:t.team,style:{fontSize:11,color:C.green,marginBottom:4}},`${t.group}1: ${t.team}`))
+      ),
+      React.createElement("div",{style:{flex:1}},
+        React.createElement(MiniLabel,null,"2dos LUGARES"),
+        seconds.map(t=>React.createElement("div",{key:t.team,style:{fontSize:11,color:C.green,marginBottom:4}},`${t.group}2: ${t.team}`))
+      )
+    ),
+    React.createElement(MiniLabel,null,"🔥 TABLA DE 3ros LUGARES (Pasan los 8 mejores)"),
+    React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
+      React.createElement("thead",null,
+        React.createElement("tr",null,["Gr","Equipo","Pts","DG","GF"].map(h=>React.createElement("th",{key:h,style:{color:C.gold,textAlign:"left",paddingBottom:8}},h)))
+      ),
+      React.createElement("tbody",null,
+        thirds.map((t,i)=>{
+           const passes = i<8;
+           const style = {borderBottom:`1px solid rgba(255,255,255,0.05)`,color:passes?C.green:C.red};
+           return React.createElement("tr",{key:t.team,style},
+             React.createElement("td",{style:{padding:"6px 0",fontWeight:"bold"}},t.group),
+             React.createElement("td",null,t.team),
+             React.createElement("td",{style:{fontWeight:"bold"}},t.pts),
+             React.createElement("td",null,t.gf-t.gc),
+             React.createElement("td",null,t.gf)
+           );
+        })
+      )
+    )
+  );
+}
+
 function Phase2({groupData,setGroupData,onComplete}){
   const[activeGroup,setActiveGroup]=useState("A");
   const allDone=GROUP_KEYS.every(k=>groupData[k]&&groupData[k].matches.every(m=>m.confirmed));
@@ -486,17 +543,22 @@ function Phase2({groupData,setGroupData,onComplete}){
         }},k+(done?"✓":""));
       })
     ),
-    groupData[activeGroup]&&React.createElement(Card,null,
-      React.createElement(GoldTitle,null,`Grupo ${activeGroup}`),
-      React.createElement(GroupPanel,{
-        gk:activeGroup,gd:groupData[activeGroup],
-        onUpdate:updated=>setGroupData(prev=>({...prev,[activeGroup]:updated}))
-      })
-    ),
-    React.createElement("div",{style:{textAlign:"center",marginTop:28,display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}},
-      !allDone&&React.createElement("button",{onClick:autoSimulateGroup,style:secBtn},`🎲 Simular Grupo ${activeGroup}`),
-      !allDone&&React.createElement("button",{onClick:autoSimulateAll,style:secBtn},"🎲 Simular Todos los Grupos"),
-      allDone&&React.createElement("button",{onClick:onComplete,style:primaryBtn},"▶ Generar Cuadro Eliminatorio")
+    React.createElement("div",{className:"grid-2col"},
+      groupData[activeGroup]&&React.createElement("div",null,
+        React.createElement(Card,null,
+          React.createElement(GoldTitle,null,`Grupo ${activeGroup}`),
+          React.createElement(GroupPanel,{
+            gk:activeGroup,gd:groupData[activeGroup],
+            onUpdate:updated=>setGroupData(prev=>({...prev,[activeGroup]:updated}))
+          })
+        ),
+        React.createElement("div",{style:{textAlign:"center",marginTop:28,display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}},
+          !allDone&&React.createElement("button",{onClick:autoSimulateGroup,style:secBtn},`🎲 Simular Grupo ${activeGroup}`),
+          !allDone&&React.createElement("button",{onClick:autoSimulateAll,style:secBtn},"🎲 Simular Todos los Grupos"),
+          allDone&&React.createElement("button",{onClick:onComplete,style:primaryBtn},"▶ Generar Cuadro Eliminatorio")
+        )
+      ),
+      React.createElement(LivePanel,{groupData})
     )
   );
 }
@@ -504,7 +566,7 @@ function Phase2({groupData,setGroupData,onComplete}){
 // ─── BRACKET BUILDER ───────────────────────────────────────────────────────
 function buildBracket(groupData){
   const ranked={};
-  GROUP_KEYS.forEach(k=>{ranked[k]=computeTable(groupData[k].teams,groupData[k].matches);});
+  GROUP_KEYS.forEach(k=>{ranked[k]=computeTable(groupData[k].teams,groupData[k].matches,groupData[k].tieBreakers);});
   const firsts=GROUP_KEYS.map(k=>({...ranked[k][0],group:k}));
   const seconds=GROUP_KEYS.map(k=>({...ranked[k][1],group:k}));
   const thirds=GROUP_KEYS.map(k=>({...ranked[k][2],group:k}));
@@ -512,7 +574,8 @@ function buildBracket(groupData){
     if(b.pts!==a.pts)return b.pts-a.pts;
     const da=a.gf-a.gc,db=b.gf-b.gc;
     if(db!==da)return db-da;
-    return b.gf-a.gf;
+    if(b.gf!==a.gf)return b.gf-a.gf;
+    return groupData[b.group].tieBreakers[b.team]-groupData[a.group].tieBreakers[a.team];
   }).slice(0,8);
   const f=(g,pos)=>{
     if(pos===1)return firsts.find(t=>t.group===g).team;
@@ -665,7 +728,9 @@ export default function WorldCup2026(){
     const data={};
     GROUP_KEYS.forEach(k=>{
       const teams=BASE_GROUPS[k].map(t=>t.startsWith("TBD:")?q[t.replace("TBD:","")]||t:t);
-      data[k]={teams,matches:makeGroupMatches(teams)};
+      const tieBreakers={};
+      teams.forEach(t=>{tieBreakers[t]=Math.random();});
+      data[k]={teams,matches:makeGroupMatches(teams),tieBreakers};
     });
     setGroupData(data);
     setPhase(1);
