@@ -483,31 +483,21 @@ function getLiveStandings(groupData){
   return {firsts, seconds, thirds};
 }
 
-function LivePanel({groupData}) {
-  const {firsts,seconds,thirds} = getLiveStandings(groupData);
-  return React.createElement(Card,{style:{maxHeight:"80vh",overflowY:"auto",padding:"16px 20px"}},
-    React.createElement(GoldTitle,null,"🏆 Clasificación en Tiempo Real"),
-    React.createElement("div",{style:{display:"flex",gap:16,marginBottom:16}},
-      React.createElement("div",{style:{flex:1}},
-        React.createElement(MiniLabel,null,"1ros LUGARES (Top 8 vs 3ros)"),
-        firsts.map((t,i)=>React.createElement("div",{key:t.team,style:{fontSize:11,color:i<8?C.green:"#88cc88",marginBottom:4}},`${i+1}. ${t.group}1: ${t.team}`))
-      ),
-      React.createElement("div",{style:{flex:1}},
-        React.createElement(MiniLabel,null,"2dos LUGARES"),
-        seconds.map((t,i)=>React.createElement("div",{key:t.team,style:{fontSize:11,color:i<8?C.green:"#88cc88",marginBottom:4}},`${i+1}. ${t.group}2: ${t.team}`))
-      )
-    ),
-    React.createElement(MiniLabel,null,"🔥 TABLA DE 3ros LUGARES (Pasan los 8 mejores)"),
+function StandingsTable({title, data, cutoffIndex, cutColor, normalColor}) {
+  if(!data||data.length===0) return null;
+  return React.createElement("div",{style:{marginBottom:20}},
+    React.createElement(MiniLabel,null,title),
     React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
       React.createElement("thead",null,
-        React.createElement("tr",null,["Gr","Equipo","Pts","DG","GF"].map(h=>React.createElement("th",{key:h,style:{color:C.gold,textAlign:"left",paddingBottom:8}},h)))
+        React.createElement("tr",null,["#","Gr","Equipo","Pts","DG","GF"].map(h=>React.createElement("th",{key:h,style:{color:C.gold,textAlign:"left",paddingBottom:8}},h)))
       ),
       React.createElement("tbody",null,
-        thirds.map((t,i)=>{
-           const passes = i<8;
-           const style = {borderBottom:`1px solid rgba(255,255,255,0.05)`,color:passes?C.green:C.red};
+        data.map((t,i)=>{
+           const passes = i<cutoffIndex;
+           const style = {borderBottom:`1px solid rgba(255,255,255,0.05)`,color:passes?cutColor:normalColor};
            return React.createElement("tr",{key:t.team,style},
-             React.createElement("td",{style:{padding:"6px 0",fontWeight:"bold"}},t.group),
+             React.createElement("td",{style:{padding:"6px 0",color:"rgba(255,255,255,0.3)"}},i+1),
+             React.createElement("td",{style:{fontWeight:"bold"}},t.group),
              React.createElement("td",null,t.team),
              React.createElement("td",{style:{fontWeight:"bold"}},t.pts),
              React.createElement("td",null,t.gf-t.gc),
@@ -516,6 +506,16 @@ function LivePanel({groupData}) {
         })
       )
     )
+  );
+}
+
+function LivePanel({groupData}) {
+  const {firsts,seconds,thirds} = getLiveStandings(groupData);
+  return React.createElement(Card,{style:{maxHeight:"85vh",overflowY:"auto",padding:"16px 20px"}},
+    React.createElement(GoldTitle,null,"🏆 Clasificatorios en Vivo"),
+    React.createElement(StandingsTable, {title:"🥇 1ros LUGARES (Top 8 contra Terceros)", data:firsts, cutoffIndex:8, cutColor:C.green, normalColor:"#88cc88"}),
+    React.createElement(StandingsTable, {title:"🥈 2dos LUGARES", data:seconds, cutoffIndex:8, cutColor:C.green, normalColor:"#88cc88"}),
+    React.createElement(StandingsTable, {title:"🥉 TABLA DE TERCEROS (Pasan 8)", data:thirds, cutoffIndex:8, cutColor:C.green, normalColor:C.red})
   );
 }
 
