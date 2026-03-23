@@ -473,7 +473,9 @@ function getLiveStandings(groupData){
     const da=a.gf-a.gc,db=b.gf-b.gc;
     if(db!==da)return db-da;
     if(b.gf!==a.gf)return b.gf-a.gf;
-    return groupData[b.group].tieBreakers[b.team]-groupData[a.group].tieBreakers[a.team];
+    const tbB = groupData[b.group].tieBreakers ? groupData[b.group].tieBreakers[b.team] : 0;
+    const tbA = groupData[a.group].tieBreakers ? groupData[a.group].tieBreakers[a.team] : 0;
+    return (tbB || 0) - (tbA || 0);
   });
   return {firsts, seconds, thirds};
 }
@@ -575,7 +577,9 @@ function buildBracket(groupData){
     const da=a.gf-a.gc,db=b.gf-b.gc;
     if(db!==da)return db-da;
     if(b.gf!==a.gf)return b.gf-a.gf;
-    return groupData[b.group].tieBreakers[b.team]-groupData[a.group].tieBreakers[a.team];
+    const tbB = groupData[b.group].tieBreakers ? groupData[b.group].tieBreakers[b.team] : 0;
+    const tbA = groupData[a.group].tieBreakers ? groupData[a.group].tieBreakers[a.team] : 0;
+    return (tbB || 0) - (tbA || 0);
   }).slice(0,8);
   const f=(g,pos)=>{
     if(pos===1)return firsts.find(t=>t.group===g).team;
