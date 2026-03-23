@@ -48,6 +48,27 @@
         padding: 4px 20px 22px;
         flex-wrap: wrap;
       }
+      .bracket-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 40px;
+        padding: 20px 0 60px;
+        align-items: center; 
+      }
+      .bracket-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        gap: 20px;
+        min-width: 300px;
+      }
+      @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+      }
+      .pulse-anim { animation: pulse 2s infinite; }
+
       @media (max-width: 768px) {
         .grid-2col, .grid-2col-gap24, .grid-cond {
           grid-template-columns: 1fr;

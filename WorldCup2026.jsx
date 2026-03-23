@@ -157,7 +157,7 @@ function MiniLabel({children}){
 }
 
 // ─── SCORE BOX ─────────────────────────────────────────────────────────────
-function ScoreBox({value,onChange}){
+function ScoreBox({value,onChange,error}){
   return React.createElement("input",{
     type:"number",min:"0",max:"99",
     value:value,
@@ -165,9 +165,10 @@ function ScoreBox({value,onChange}){
     style:{
       width:44,height:44,textAlign:"center",fontSize:20,fontWeight:700,
       background:"rgba(255,255,255,0.07)",
-      border:`2px solid ${value!==""?C.green:"rgba(255,255,255,0.15)"}`,
+      border:`2px solid ${error?C.red:value!==""?C.green:"rgba(255,255,255,0.15)"}`,
       borderRadius:8,color:"#fff",outline:"none",fontFamily:font,
       boxSizing:"border-box",
+      boxShadow:error?`0 0 8px ${C.red}`:"none",
     }
   });
 }
@@ -177,8 +178,9 @@ function MatchEntry({match,label,onChange,onConfirm,onEdit}){
   const{t1,t2,g1,g2,p1,p2,confirmed,winner}=match;
   const hasScores=g1!==""&&g2!=="";
   const isDraw=hasScores&&+g1===+g2;
-  const pensFilled=p1!==""&&p2!==""&&+p1!==+p2;
-  const canConfirm=hasScores&&(!isDraw||pensFilled);
+  const pErr=p1!==""&&p2!==""&&+p1===+p2;
+  const pensFilled=p1!==""&&p2!==""&&!pErr;
+  const canConfirm=hasScores&&(!isDraw||pensFilled)&&(+g1>=0)&&(+g2>=0);
 
   if(confirmed){
     return React.createElement("div",{style:{
@@ -200,20 +202,21 @@ function MatchEntry({match,label,onChange,onConfirm,onEdit}){
     label&&React.createElement("div",{style:{fontSize:10,color:C.gold,letterSpacing:1.5,marginBottom:8,fontFamily:font}},label),
     React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
       React.createElement("span",{style:{flex:1,fontSize:13,color:"#e0d8c8",fontFamily:font,minWidth:90}},t1||"—"),
-      React.createElement(ScoreBox,{value:g1,onChange:v=>onChange({g1:v})}),
+      React.createElement(ScoreBox,{value:g1,onChange:v=>onChange({g1:v}),error:g1!==""&&+g1<0}),
       React.createElement("span",{style:{color:"#555",fontSize:16}},"–"),
-      React.createElement(ScoreBox,{value:g2,onChange:v=>onChange({g2:v})}),
+      React.createElement(ScoreBox,{value:g2,onChange:v=>onChange({g2:v}),error:g2!==""&&+g2<0}),
       React.createElement("span",{style:{flex:1,textAlign:"right",fontSize:13,color:"#e0d8c8",fontFamily:font,minWidth:90}},t2||"—")
     ),
     isDraw&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.08)"}},
       React.createElement("span",{style:{fontSize:12,color:C.gold,fontFamily:font,minWidth:60}},"Penales:"),
       React.createElement("span",{style:{flex:1,fontSize:11,color:"#aaa",textAlign:"right",fontFamily:font}},t1),
-      React.createElement(ScoreBox,{value:p1,onChange:v=>onChange({p1:v})}),
+      React.createElement(ScoreBox,{value:p1,onChange:v=>onChange({p1:v}),error:pErr}),
       React.createElement("span",{style:{color:"#555"}},"–"),
-      React.createElement(ScoreBox,{value:p2,onChange:v=>onChange({p2:v})}),
+      React.createElement(ScoreBox,{value:p2,onChange:v=>onChange({p2:v}),error:pErr}),
       React.createElement("span",{style:{flex:1,fontSize:11,color:"#aaa",fontFamily:font}},t2)
     ),
-    isDraw&&!pensFilled&&React.createElement("div",{style:{fontSize:11,color:"#f0a040",marginTop:6,fontFamily:font}},"⚠ Empate — ingresa penales (deben ser distintos)"),
+    isDraw&&!pensFilled&&!pErr&&React.createElement("div",{style:{fontSize:11,color:"#f0a040",marginTop:6,fontFamily:font,animation:"pulse 1.5s infinite"}},"⚠ Empate — ingresa penales (deben ser distintos)"),
+    pErr&&React.createElement("div",{style:{fontSize:11,color:C.red,marginTop:6,fontFamily:font,fontWeight:700}},"❌ Los penales no pueden empatar"),
     React.createElement("button",{
       disabled:!canConfirm,
       onClick:onConfirm,
@@ -519,8 +522,6 @@ function buildBracket(groupData){
 
 // ─── PHASE 3 ───────────────────────────────────────────────────────────────
 function Phase3({rounds,setRounds,onComplete}){
-  const[activeRound,setActiveRound]=useState(0);
-
   function patchMatch(ri,mi,patch){
     setRounds(prev=>prev.map((r,i)=>i!==ri?r:r.map((m,j)=>j!==mi?m:{...m,...patch})));
   }
@@ -549,6 +550,7 @@ function Phase3({rounds,setRounds,onComplete}){
   }
 
   const allFinalDone=rounds.length===5&&rounds[4]&&rounds[4].every(m=>m.confirmed);
+  const activeRound=rounds.length-1;
 
   function autoSimulateActiveRound() {
     setRounds(prev => {
@@ -566,41 +568,21 @@ function Phase3({rounds,setRounds,onComplete}){
     });
   }
 
-  return React.createElement("div",null,
-    React.createElement("div",{style:{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}},
-      ROUND_NAMES.map((name,i)=>{
-        const unlocked=i<rounds.length;
-        const done=unlocked&&rounds[i]&&rounds[i].every(m=>m.confirmed);
-        return React.createElement("button",{key:i,disabled:!unlocked,onClick:()=>unlocked&&setActiveRound(i),style:{
-          padding:"8px 16px",borderRadius:8,
-          border:`1.5px solid ${activeRound===i?C.gold:done?C.borderGreen:C.border}`,
-          background:activeRound===i?"rgba(240,192,64,0.13)":"transparent",
-          color:!unlocked?"#333":done?C.green:activeRound===i?C.gold:"#999",
-          fontWeight:700,cursor:unlocked?"pointer":"default",fontSize:13,fontFamily:font,
-        }},name+(done?" ✓":""));
-      })
+  return React.createElement("div",{className:"bracket-container"},
+    rounds.map((round, ri) => React.createElement("div",{key:ri, className: "bracket-column"},
+      React.createElement(GoldTitle,null,ROUND_NAMES[ri]),
+      round.map((m, mi) => React.createElement(MatchEntry,{
+        key:mi,match:m,label:`Partido ${mi+1}`,
+        onChange:p=>patchMatch(ri,mi,p),
+        onConfirm:()=>confirmMatch(ri,mi),
+        onEdit:()=>editMatch(ri,mi)
+      }))
+    )),
+    !allFinalDone&&React.createElement("div",{className:"bracket-column",style:{alignItems:"center",justifyContent:"center",minWidth:200}},
+       React.createElement("button",{onClick:autoSimulateActiveRound,style:secBtn},`🎲 Autocompletar ${ROUND_NAMES[activeRound]}`)
     ),
-    rounds[activeRound]&&React.createElement(Card,null,
-      React.createElement(GoldTitle,null,ROUND_NAMES[activeRound]),
-      React.createElement("div",{className:rounds[activeRound].length>4?"grid-cond":"grid-cond-1"},
-        rounds[activeRound].map((m,mi)=>React.createElement(MatchEntry,{
-          key:mi,match:m,label:`Partido ${mi+1}`,
-          onChange:p=>patchMatch(activeRound,mi,p),
-          onConfirm:()=>confirmMatch(activeRound,mi),
-          onEdit:()=>editMatch(activeRound,mi),
-        }))
-      ),
-      !rounds[activeRound].every(m=>m.confirmed)&&
-        React.createElement("div",{style:{textAlign:"center",marginTop:20}},
-          React.createElement("button",{onClick:autoSimulateActiveRound,style:secBtn},`🎲 Simular ${ROUND_NAMES[activeRound]}`)
-        ),
-      rounds[activeRound].every(m=>m.confirmed)&&activeRound<ROUND_NAMES.length-1&&
-        React.createElement("div",{style:{textAlign:"center",marginTop:20}},
-          React.createElement("button",{onClick:()=>setActiveRound(activeRound+1),style:primaryBtn},`▶ Ver ${ROUND_NAMES[activeRound+1]}`)
-        )
-    ),
-    allFinalDone&&React.createElement("div",{style:{textAlign:"center",marginTop:28}},
-      React.createElement("button",{onClick:onComplete,style:primaryBtn},"🏆 Ver Campeón del Mundo")
+    allFinalDone&&React.createElement("div",{className:"bracket-column",style:{alignItems:"center",justifyContent:"center",minWidth:250}},
+      React.createElement("button",{onClick:onComplete,style:primaryBtn,className:"pulse-anim"},"🏆 Ver Campeón del Mundo")
     )
   );
 }
