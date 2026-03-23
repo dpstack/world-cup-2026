@@ -66,6 +66,18 @@ const ROUND_NAMES = ["16avos de Final","Octavos de Final","Cuartos de Final","Se
 function emptyMatch(t1,t2){return{t1:t1||"",t2:t2||"",g1:"",g2:"",p1:"",p2:"",confirmed:false,winner:null};}
 
 function makeGroupMatches(teams){
+  if(teams.length === 4) {
+    // Official round-robin 4-team tournament order
+    return [
+      emptyMatch(teams[0], teams[1]),
+      emptyMatch(teams[2], teams[3]),
+      emptyMatch(teams[0], teams[2]),
+      emptyMatch(teams[1], teams[3]),
+      emptyMatch(teams[0], teams[3]),
+      emptyMatch(teams[1], teams[2]),
+    ];
+  }
+  // Generic fallback
   const m=[];
   for(let i=0;i<teams.length;i++)
     for(let j=i+1;j<teams.length;j++) m.push(emptyMatch(teams[i],teams[j]));
