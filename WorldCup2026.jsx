@@ -468,7 +468,7 @@ function getLiveStandings(groupData){
     if(ranked[k][1]) seconds.push({...ranked[k][1], group:k});
     if(ranked[k][2]) thirds.push({...ranked[k][2], group:k});
   });
-  thirds.sort((a,b)=>{
+  const sortGlobal=(a,b)=>{
     if(b.pts!==a.pts)return b.pts-a.pts;
     const da=a.gf-a.gc,db=b.gf-b.gc;
     if(db!==da)return db-da;
@@ -476,7 +476,10 @@ function getLiveStandings(groupData){
     const tbB = groupData[b.group].tieBreakers ? groupData[b.group].tieBreakers[b.team] : 0;
     const tbA = groupData[a.group].tieBreakers ? groupData[a.group].tieBreakers[a.team] : 0;
     return (tbB || 0) - (tbA || 0);
-  });
+  };
+  firsts.sort(sortGlobal);
+  seconds.sort(sortGlobal);
+  thirds.sort(sortGlobal);
   return {firsts, seconds, thirds};
 }
 
@@ -486,12 +489,12 @@ function LivePanel({groupData}) {
     React.createElement(GoldTitle,null,"🏆 Clasificación en Tiempo Real"),
     React.createElement("div",{style:{display:"flex",gap:16,marginBottom:16}},
       React.createElement("div",{style:{flex:1}},
-        React.createElement(MiniLabel,null,"1ros LUGARES"),
-        firsts.map(t=>React.createElement("div",{key:t.team,style:{fontSize:11,color:C.green,marginBottom:4}},`${t.group}1: ${t.team}`))
+        React.createElement(MiniLabel,null,"1ros LUGARES (Top 8 vs 3ros)"),
+        firsts.map((t,i)=>React.createElement("div",{key:t.team,style:{fontSize:11,color:i<8?C.green:"#88cc88",marginBottom:4}},`${i+1}. ${t.group}1: ${t.team}`))
       ),
       React.createElement("div",{style:{flex:1}},
         React.createElement(MiniLabel,null,"2dos LUGARES"),
-        seconds.map(t=>React.createElement("div",{key:t.team,style:{fontSize:11,color:C.green,marginBottom:4}},`${t.group}2: ${t.team}`))
+        seconds.map((t,i)=>React.createElement("div",{key:t.team,style:{fontSize:11,color:i<8?C.green:"#88cc88",marginBottom:4}},`${i+1}. ${t.group}2: ${t.team}`))
       )
     ),
     React.createElement(MiniLabel,null,"🔥 TABLA DE 3ros LUGARES (Pasan los 8 mejores)"),
@@ -567,34 +570,34 @@ function Phase2({groupData,setGroupData,onComplete}){
 
 // ─── BRACKET BUILDER ───────────────────────────────────────────────────────
 function buildBracket(groupData){
-  const ranked={};
-  GROUP_KEYS.forEach(k=>{ranked[k]=computeTable(groupData[k].teams,groupData[k].matches,groupData[k].tieBreakers);});
-  const firsts=GROUP_KEYS.map(k=>({...ranked[k][0],group:k}));
-  const seconds=GROUP_KEYS.map(k=>({...ranked[k][1],group:k}));
-  const thirds=GROUP_KEYS.map(k=>({...ranked[k][2],group:k}));
-  const best8=[...thirds].sort((a,b)=>{
-    if(b.pts!==a.pts)return b.pts-a.pts;
-    const da=a.gf-a.gc,db=b.gf-b.gc;
-    if(db!==da)return db-da;
-    if(b.gf!==a.gf)return b.gf-a.gf;
-    const tbB = groupData[b.group].tieBreakers ? groupData[b.group].tieBreakers[b.team] : 0;
-    const tbA = groupData[a.group].tieBreakers ? groupData[a.group].tieBreakers[a.team] : 0;
-    return (tbB || 0) - (tbA || 0);
-  }).slice(0,8);
-  const f=(g,pos)=>{
-    if(pos===1)return firsts.find(t=>t.group===g).team;
-    if(pos===2)return seconds.find(t=>t.group===g).team;
-    const t=best8.find(t=>t.group===g);
-    return t?t.team:thirds.find(t=>t.group===g).team;
-  };
+  const { firsts, seconds, thirds } = getLiveStandings(groupData);
+  const best8Firsts = firsts.slice(0, 8);
+  const bottom4Firsts = firsts.slice(8, 12);
+  const best8Seconds = seconds.slice(0, 8);
+  const bottom4Seconds = seconds.slice(8, 12);
+  const best8Thirds = thirds.slice(0, 8);
+
+  const safeTeam = (arr, i) => arr[i] ? arr[i].team : "TBD";
+
   const pairs=[
-    [f("A",1),f("B",2)],[f("C",1),f("D",2)],[f("E",1),f("F",2)],[f("G",1),f("H",2)],
-    [f("I",1),f("J",2)],[f("K",1),f("L",2)],[f("A",2),f("B",1)],[f("C",2),f("D",1)],
-    [f("E",2),f("F",1)],[f("G",2),f("H",1)],[f("I",2),f("J",1)],[f("K",2),f("L",1)],
-    [best8[0]?best8[0].team:"TBD",best8[1]?best8[1].team:"TBD"],
-    [best8[2]?best8[2].team:"TBD",best8[3]?best8[3].team:"TBD"],
-    [best8[4]?best8[4].team:"TBD",best8[5]?best8[5].team:"TBD"],
-    [best8[6]?best8[6].team:"TBD",best8[7]?best8[7].team:"TBD"],
+    [safeTeam(best8Firsts, 0), safeTeam(best8Thirds, 7)],
+    [safeTeam(best8Firsts, 1), safeTeam(best8Thirds, 6)],
+    [safeTeam(best8Firsts, 2), safeTeam(best8Thirds, 5)],
+    [safeTeam(best8Firsts, 3), safeTeam(best8Thirds, 4)],
+    [safeTeam(best8Firsts, 4), safeTeam(best8Thirds, 3)],
+    [safeTeam(best8Firsts, 5), safeTeam(best8Thirds, 2)],
+    [safeTeam(best8Firsts, 6), safeTeam(best8Thirds, 1)],
+    [safeTeam(best8Firsts, 7), safeTeam(best8Thirds, 0)],
+    
+    [safeTeam(bottom4Firsts, 0), safeTeam(bottom4Seconds, 3)],
+    [safeTeam(bottom4Firsts, 1), safeTeam(bottom4Seconds, 2)],
+    [safeTeam(bottom4Firsts, 2), safeTeam(bottom4Seconds, 1)],
+    [safeTeam(bottom4Firsts, 3), safeTeam(bottom4Seconds, 0)],
+
+    [safeTeam(best8Seconds, 0), safeTeam(best8Seconds, 7)],
+    [safeTeam(best8Seconds, 1), safeTeam(best8Seconds, 6)],
+    [safeTeam(best8Seconds, 2), safeTeam(best8Seconds, 5)],
+    [safeTeam(best8Seconds, 3), safeTeam(best8Seconds, 4)],
   ];
   return pairs.map(([t1,t2])=>emptyMatch(t1,t2));
 }
