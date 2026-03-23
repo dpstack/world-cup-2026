@@ -331,7 +331,7 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
           IC_SEMIS_META.map((meta,i)=>React.createElement(MatchEntry,{
             key:meta.id,
             match:ic.semis[i],
-            label:`${meta.date} · ${meta.city}`,
+            label:`${meta.date} · ${meta.city}`,isKnockout:true,
             onChange:p=>patchIcSemi(i,p),
             onConfirm:()=>confirmIcSemi(i),
             onEdit:()=>editIcSemi(i),
@@ -346,7 +346,7 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
             const dm={...ic.finals[i],t1:ic.semis[meta.semiIdx].winner||`Ganador Semi ${i+1}`,t2:meta.seed};
             return React.createElement(MatchEntry,{
               key:meta.id,match:dm,
-              label:`→ Grupo ${meta.destGroup} · ${meta.date} · ${meta.city}`,
+              label:`→ Grupo ${meta.destGroup} · ${meta.date} · ${meta.city}`,isKnockout:true,
               onChange:p=>patchIcFinal(i,p),
               onConfirm:()=>confirmIcFinal(i),
               onEdit:()=>editIcFinal(i),
@@ -373,7 +373,7 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
             ),
             React.createElement(MiniLabel,null,"SEMIFINALES"),
             route.semis.map((s,si)=>React.createElement(MatchEntry,{
-              key:s.id,match:rs.semis[si],label:`Semifinal ${si+1}`,
+              key:s.id,match:rs.semis[si],label:`Semifinal ${si+1}`,isKnockout:true,
               onChange:p=>patchRouteSemi(ri,si,p),
               onConfirm:()=>confirmRouteSemi(ri,si),
               onEdit:()=>editRouteSemi(ri,si),
@@ -383,7 +383,7 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
               : React.createElement("div",null,
                   React.createElement(MiniLabel,null,`FINAL → GRUPO ${route.destGroup}`),
                   React.createElement(MatchEntry,{
-                    match:finalMatch,label:null,
+                    match:finalMatch,label:null,isKnockout:true,
                     onChange:p=>patchRouteFinal(ri,p),
                     onConfirm:()=>confirmRouteFinal(ri),
                     onEdit:()=>editRouteFinal(ri),
