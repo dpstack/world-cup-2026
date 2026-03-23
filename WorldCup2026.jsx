@@ -761,7 +761,8 @@ export default function WorldCup2026(){
 
   return React.createElement("div",{style:{minHeight:"100vh",background:C.bg,color:"#e0d8c8",fontFamily:font}},
     React.createElement("div",{style:{height:4,background:"linear-gradient(90deg,#c89010,#f0c040,#fff8c0,#f0c040,#c89010)"}}),
-    React.createElement("div",{style:{textAlign:"center",padding:"30px 20px 14px"}},
+    React.createElement("div",{style:{textAlign:"center",padding:"40px 20px 14px",display:"flex",flexDirection:"column",alignItems:"center"}},
+      React.createElement("img",{src:"./logo.png",alt:"WC26 Logo",style:{width:80,height:80,borderRadius:20,boxShadow:"0 10px 30px rgba(64,224,128,0.15)",marginBottom:20,border:`1px solid rgba(255,255,255,0.08)`}}),
       React.createElement("div",{style:{fontSize:11,color:"#666",letterSpacing:6,marginBottom:6}},"FIFA"),
       React.createElement("div",{style:{fontSize:40,fontWeight:700,fontFamily:font,letterSpacing:3,background:`linear-gradient(135deg,${C.gold} 0%,#fff8e0 50%,#c89010 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}},"WORLD CUP 2026"),
       React.createElement("div",{style:{fontSize:12,color:"#777",marginTop:6,letterSpacing:2}},"🇺🇸 EE.UU.  ·  🇨🇦 Canadá  ·  🇲🇽 México")
