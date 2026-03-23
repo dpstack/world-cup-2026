@@ -174,7 +174,11 @@ function ScoreBox({value,onChange,error}){
   return React.createElement("input",{
     type:"number",min:"0",max:"99",
     value:value,
-    onChange:e=>onChange(e.target.value),
+    onChange:e=>{
+      let val = e.target.value.replace(/[^0-9]/g, '');
+      if(val.length > 2) val = val.slice(0,2);
+      onChange(val);
+    },
     style:{
       width:44,height:44,textAlign:"center",fontSize:20,fontWeight:700,
       background:"rgba(255,255,255,0.07)",
@@ -187,13 +191,13 @@ function ScoreBox({value,onChange,error}){
 }
 
 // ─── MATCH ENTRY (stateless) ───────────────────────────────────────────────
-function MatchEntry({match,label,onChange,onConfirm,onEdit}){
+function MatchEntry({match,label,onChange,onConfirm,onEdit,isKnockout=false}){
   const{t1,t2,g1,g2,p1,p2,confirmed,winner}=match;
   const hasScores=g1!==""&&g2!=="";
   const isDraw=hasScores&&+g1===+g2;
   const pErr=p1!==""&&p2!==""&&+p1===+p2;
   const pensFilled=p1!==""&&p2!==""&&!pErr;
-  const canConfirm=hasScores&&(!isDraw||pensFilled)&&(+g1>=0)&&(+g2>=0);
+  const canConfirm=hasScores&&(!isKnockout||!isDraw||pensFilled);
 
   if(confirmed){
     return React.createElement("div",{style:{
@@ -220,7 +224,7 @@ function MatchEntry({match,label,onChange,onConfirm,onEdit}){
       React.createElement(ScoreBox,{value:g2,onChange:v=>onChange({g2:v}),error:g2!==""&&+g2<0}),
       React.createElement("span",{style:{flex:1,textAlign:"right",fontSize:13,color:"#e0d8c8",fontFamily:font,minWidth:90}},t2||"—")
     ),
-    isDraw&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.08)"}},
+    isDraw&&isKnockout&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.08)"}},
       React.createElement("span",{style:{fontSize:12,color:C.gold,fontFamily:font,minWidth:60}},"Penales:"),
       React.createElement("span",{style:{flex:1,fontSize:11,color:"#aaa",textAlign:"right",fontFamily:font}},t1),
       React.createElement(ScoreBox,{value:p1,onChange:v=>onChange({p1:v}),error:pErr}),
@@ -228,8 +232,8 @@ function MatchEntry({match,label,onChange,onConfirm,onEdit}){
       React.createElement(ScoreBox,{value:p2,onChange:v=>onChange({p2:v}),error:pErr}),
       React.createElement("span",{style:{flex:1,fontSize:11,color:"#aaa",fontFamily:font}},t2)
     ),
-    isDraw&&!pensFilled&&!pErr&&React.createElement("div",{style:{fontSize:11,color:"#f0a040",marginTop:6,fontFamily:font,animation:"pulse 1.5s infinite"}},"⚠ Empate — ingresa penales (deben ser distintos)"),
-    pErr&&React.createElement("div",{style:{fontSize:11,color:C.red,marginTop:6,fontFamily:font,fontWeight:700}},"❌ Los penales no pueden empatar"),
+    isDraw&&isKnockout&&!pensFilled&&!pErr&&React.createElement("div",{style:{fontSize:11,color:"#f0a040",marginTop:6,fontFamily:font,animation:"pulse 1.5s infinite"}},"⚠ Empate — ingresa penales (deben ser distintos)"),
+    isDraw&&isKnockout&&pErr&&React.createElement("div",{style:{fontSize:11,color:C.red,marginTop:6,fontFamily:font,fontWeight:700}},"❌ Los penales no pueden empatar"),
     React.createElement("button",{
       disabled:!canConfirm,
       onClick:onConfirm,
@@ -654,7 +658,7 @@ function Phase3({rounds,setRounds,onComplete}){
     rounds.map((round, ri) => React.createElement("div",{key:ri, className: "bracket-column"},
       React.createElement(GoldTitle,null,ROUND_NAMES[ri]),
       round.map((m, mi) => React.createElement(MatchEntry,{
-        key:mi,match:m,label:`Partido ${mi+1}`,
+        key:mi,match:m,label:`Partido ${mi+1}`,isKnockout:true,
         onChange:p=>patchMatch(ri,mi,p),
         onConfirm:()=>confirmMatch(ri,mi),
         onEdit:()=>editMatch(ri,mi)
