@@ -1,4 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+function useLocalStorageState(key, initialValueFactory) {
+  const [state, setState] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      if (item) return JSON.parse(item);
+    } catch (e) {
+      console.warn("localStorage error", e);
+    }
+    return typeof initialValueFactory === 'function' ? initialValueFactory() : initialValueFactory;
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(key, JSON.stringify(state));
+  }, [key, state]);
+
+  return [state, setState];
+}
 
 // ─── PALETTE ───────────────────────────────────────────────────────────────
 const C = {
@@ -556,11 +574,25 @@ function Phase4({rounds,champion}){
 
 // ─── ROOT ──────────────────────────────────────────────────────────────────
 export default function WorldCup2026(){
-  const[phase,setPhase]=useState(0);
-  const[ic,setIc]=useState(initIcState);
-  const[routes,setRoutes]=useState(initRoutesState);
-  const[groupData,setGroupData]=useState({});
-  const[rounds,setRounds]=useState([]);
+  const[phase,setPhase]=useLocalStorageState('wc2026_phase', 0);
+  const[ic,setIc]=useLocalStorageState('wc2026_ic', initIcState);
+  const[routes,setRoutes]=useLocalStorageState('wc2026_routes', initRoutesState);
+  const[groupData,setGroupData]=useLocalStorageState('wc2026_groupData', {});
+  const[rounds,setRounds]=useLocalStorageState('wc2026_rounds', []);
+
+  function resetTournament(){
+    if(!window.confirm("¿Estás seguro de que quieres borrar todo el torneo y empezar de cero?")) return;
+    window.localStorage.removeItem('wc2026_phase');
+    window.localStorage.removeItem('wc2026_ic');
+    window.localStorage.removeItem('wc2026_routes');
+    window.localStorage.removeItem('wc2026_groupData');
+    window.localStorage.removeItem('wc2026_rounds');
+    setPhase(0);
+    setIc(initIcState());
+    setRoutes(initRoutesState());
+    setGroupData({});
+    setRounds([]);
+  }
 
   function handlePhase1Complete(){
     const q={};
@@ -611,6 +643,9 @@ export default function WorldCup2026(){
       phase===1&&Object.keys(groupData).length>0&&React.createElement(Phase2,{groupData,setGroupData,onComplete:handlePhase2Complete}),
       phase===2&&React.createElement(Phase3,{rounds,setRounds,onComplete:()=>setPhase(3)}),
       phase===3&&React.createElement(Phase4,{rounds,champion})
+    ),
+    React.createElement("div",{style:{textAlign:"center", paddingBottom: "24px"}},
+      React.createElement("button",{onClick:resetTournament,style:{background:"transparent",border:"none",color:"#777",cursor:"pointer",fontSize:13,textDecoration:"underline",fontFamily:font}},"Borrar simulación y reiniciar torneo")
     ),
     React.createElement("div",{style:{height:4,background:"linear-gradient(90deg,#c89010,#f0c040,#fff8c0,#f0c040,#c89010)"}})
   );
