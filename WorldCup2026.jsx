@@ -269,7 +269,7 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
     // Intercontinental card
     React.createElement(Card,{style:{marginBottom:24}},
       React.createElement(GoldTitle,{sub:"2 cupos"},"🌍 Repechaje Intercontinental"),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}},
+      React.createElement("div",{className:"grid-2col"},
         // Semis
         React.createElement("div",null,
           React.createElement(MiniLabel,null,"SEMIFINALES"),
@@ -303,7 +303,7 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
     // UEFA card
     React.createElement(Card,{style:{marginBottom:24}},
       React.createElement(GoldTitle,{sub:"4 cupos"},"🇪🇺 Playoffs UEFA"),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}},
+      React.createElement("div",{className:"grid-2col"},
         PLAYOFF_ROUTES.map((route,ri)=>{
           const rs=routes[ri];
           const bothDone=rs.semis.every(s=>s.confirmed);
@@ -354,7 +354,7 @@ function GroupPanel({gk,gd,onUpdate}){
   function confirm(idx){const m=matches[idx];if(m.g1===""||m.g2==="")return;patch(idx,{confirmed:true});}
   function edit(idx){patch(idx,{confirmed:false});}
 
-  return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}},
+  return React.createElement("div",{className:"grid-2col-gap24"},
     React.createElement("div",null,
       React.createElement(MiniLabel,null,"PARTIDOS"),
       matches.map((m,i)=>{
@@ -516,7 +516,7 @@ function Phase3({rounds,setRounds,onComplete}){
     ),
     rounds[activeRound]&&React.createElement(Card,null,
       React.createElement(GoldTitle,null,ROUND_NAMES[activeRound]),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:rounds[activeRound].length>4?"1fr 1fr":"1fr",gap:10}},
+      React.createElement("div",{className:rounds[activeRound].length>4?"grid-cond":"grid-cond-1"},
         rounds[activeRound].map((m,mi)=>React.createElement(MatchEntry,{
           key:mi,match:m,label:`Partido ${mi+1}`,
           onChange:p=>patchMatch(activeRound,mi,p),
@@ -626,7 +626,7 @@ export default function WorldCup2026(){
       React.createElement("div",{style:{fontSize:40,fontWeight:700,fontFamily:font,letterSpacing:3,background:`linear-gradient(135deg,${C.gold} 0%,#fff8e0 50%,#c89010 100%)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}},"WORLD CUP 2026"),
       React.createElement("div",{style:{fontSize:12,color:"#777",marginTop:6,letterSpacing:2}},"🇺🇸 EE.UU.  ·  🇨🇦 Canadá  ·  🇲🇽 México")
     ),
-    React.createElement("div",{style:{display:"flex",justifyContent:"center",gap:8,padding:"4px 20px 22px",flexWrap:"wrap"}},
+    React.createElement("div",{className:"tabs-container"},
       tabs.map(t=>{
         const unlocked=t.ph<=phase;
         return React.createElement("button",{key:t.ph,disabled:!unlocked,onClick:()=>unlocked&&setPhase(t.ph),style:{

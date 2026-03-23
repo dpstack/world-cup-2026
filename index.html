@@ -13,7 +13,50 @@
       body {
         margin: 0;
         padding: 0;
+        /* The polyfill injects "Twemoji Country Flags" automatically, so we list it first after Outfit */
         font-family: 'Outfit', 'Twemoji Country Flags', 'Segoe UI', 'Segoe UI Emoji', sans-serif;
+      }
+      .grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .grid-2col-gap24 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .grid-cond {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .grid-cond-1 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .tabs-container {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 4px 20px 22px;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 768px) {
+        .grid-2col, .grid-2col-gap24, .grid-cond {
+          grid-template-columns: 1fr;
+        }
+        .tabs-container {
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          overflow-x: auto;
+          padding-bottom: 22px;
+          -webkit-overflow-scrolling: touch;
+        }
+        .tabs-container::-webkit-scrollbar {
+          display: none;
+        }
       }
     </style>
   </head>
