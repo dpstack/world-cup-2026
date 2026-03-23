@@ -16,6 +16,11 @@
         /* The polyfill injects "Twemoji Country Flags" automatically, so we list it first after Outfit */
         font-family: 'Outfit', 'Twemoji Country Flags', 'Segoe UI', 'Segoe UI Emoji', sans-serif;
       }
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #080e14; }
+      ::-webkit-scrollbar-thumb { background: rgba(240, 192, 64, 0.3); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(240, 192, 64, 0.6); }
+
       .grid-2col {
         display: grid;
         grid-template-columns: 1fr 1fr;

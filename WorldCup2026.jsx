@@ -114,11 +114,33 @@ function initRoutesState(){
 
 // ─── STYLE HELPERS ─────────────────────────────────────────────────────────
 const tdBase={padding:"6px 8px",textAlign:"center",fontFamily:font,color:"#ccc",fontSize:13};
+
+function solveMatch(m, allowTies) {
+  if(m.confirmed) return m;
+  const rs = () => {
+    const r=Math.random();
+    if(r<0.2) return 0; if(r<0.5) return 1; if(r<0.8) return 2; if(r<0.95) return 3; return 4;
+  };
+  const g1 = m.g1!=="" ? +m.g1 : rs();
+  const g2 = m.g2!=="" ? +m.g2 : rs();
+  let p1=m.p1, p2=m.p2;
+  if(!allowTies && g1===g2 && (p1===""||p2==="")) {
+      p1=Math.floor(Math.random()*4)+2; p2=Math.floor(Math.random()*4)+2;
+      while(p1===p2) p2=Math.floor(Math.random()*4)+2;
+  }
+  return { ...m, g1, g2, p1, p2, confirmed: true, winner: resolveWinner(m.t1,m.t2,g1,g2,p1,p2) };
+}
+
 const primaryBtn={
   padding:"12px 32px",background:`linear-gradient(135deg,${C.gold},#c89010)`,
   color:"#080e14",border:"none",borderRadius:10,fontWeight:700,
   cursor:"pointer",fontSize:16,fontFamily:font,letterSpacing:1,
   boxShadow:`0 4px 20px rgba(240,192,64,0.3)`,
+};
+const secBtn={
+  padding:"8px 16px",background:"rgba(255,255,255,0.06)",
+  color:"#e0d8c8",border:`1px solid ${C.border}`,borderRadius:8,fontWeight:600,
+  cursor:"pointer",fontSize:13,fontFamily:font,
 };
 
 function Card({children,style}){
@@ -263,6 +285,19 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
   }
   function editRouteFinal(ri){patchRouteFinal(ri,{confirmed:false,winner:null});}
 
+  function autoSimulate() {
+    setIc(prev => {
+      const semis = prev.semis.map(m => solveMatch(m, false));
+      const finals = prev.finals.map((f, i) => solveMatch({...f, t1: semis[IC_FINALS_META[i].semiIdx].winner}, false));
+      return { semis, finals };
+    });
+    setRoutes(prev => prev.map(r => {
+      const semis = r.semis.map(m => solveMatch(m, false));
+      const final = solveMatch({...r.final, t1: semis[0].winner, t2: semis[1].winner}, false);
+      return { ...r, semis, final };
+    }));
+  }
+
   const allDone=ic.semis.every(m=>m.confirmed)&&ic.finals.every(m=>m.confirmed)&&routes.every(r=>r.final.confirmed);
 
   return React.createElement("div",null,
@@ -338,8 +373,9 @@ function Phase1({ic,setIc,routes,setRoutes,onComplete}){
         })
       )
     ),
-    allDone&&React.createElement("div",{style:{textAlign:"center",marginTop:28}},
-      React.createElement("button",{onClick:onComplete,style:primaryBtn},"▶ Avanzar a Fase de Grupos")
+    React.createElement("div",{style:{textAlign:"center",marginTop:28,display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}},
+      !allDone&&React.createElement("button",{onClick:autoSimulate,style:secBtn},"🎲 Simular todo el Repechaje"),
+      allDone&&React.createElement("button",{onClick:onComplete,style:primaryBtn},"▶ Avanzar a Fase de Grupos")
     )
   );
 }
@@ -409,6 +445,18 @@ function GroupPanel({gk,gd,onUpdate}){
 function Phase2({groupData,setGroupData,onComplete}){
   const[activeGroup,setActiveGroup]=useState("A");
   const allDone=GROUP_KEYS.every(k=>groupData[k]&&groupData[k].matches.every(m=>m.confirmed));
+  
+  function autoSimulateGroup() {
+    setGroupData(prev => ({...prev, [activeGroup]: { ...prev[activeGroup], matches: prev[activeGroup].matches.map(m => solveMatch(m, true)) }}));
+  }
+  function autoSimulateAll() {
+    setGroupData(prev => {
+      const next = {...prev};
+      GROUP_KEYS.forEach(k => { next[k] = { ...next[k], matches: next[k].matches.map(m => solveMatch(m, true)) }; });
+      return next;
+    });
+  }
+
   return React.createElement("div",null,
     React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:20}},
       GROUP_KEYS.map(k=>{
@@ -430,8 +478,10 @@ function Phase2({groupData,setGroupData,onComplete}){
         onUpdate:updated=>setGroupData(prev=>({...prev,[activeGroup]:updated}))
       })
     ),
-    allDone&&React.createElement("div",{style:{textAlign:"center",marginTop:28}},
-      React.createElement("button",{onClick:onComplete,style:primaryBtn},"▶ Generar Cuadro Eliminatorio")
+    React.createElement("div",{style:{textAlign:"center",marginTop:28,display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}},
+      !allDone&&React.createElement("button",{onClick:autoSimulateGroup,style:secBtn},`🎲 Simular Grupo ${activeGroup}`),
+      !allDone&&React.createElement("button",{onClick:autoSimulateAll,style:secBtn},"🎲 Simular Todos los Grupos"),
+      allDone&&React.createElement("button",{onClick:onComplete,style:primaryBtn},"▶ Generar Cuadro Eliminatorio")
     )
   );
 }
@@ -500,6 +550,22 @@ function Phase3({rounds,setRounds,onComplete}){
 
   const allFinalDone=rounds.length===5&&rounds[4]&&rounds[4].every(m=>m.confirmed);
 
+  function autoSimulateActiveRound() {
+    setRounds(prev => {
+       const curr = prev[activeRound].map(m => solveMatch(m, false));
+       let updated = [...prev];
+       updated[activeRound] = curr;
+       if(curr.every(m=>m.confirmed) && activeRound+1 < ROUND_NAMES.length){
+          const winners = curr.map(m=>m.winner);
+          const nextMatches = [];
+          for(let k=0; k<winners.length; k+=2) nextMatches.push(emptyMatch(winners[k],winners[k+1]));
+          if(updated.length <= activeRound+1) updated.push(nextMatches);
+          else updated[activeRound+1] = nextMatches;
+       }
+       return updated;
+    });
+  }
+
   return React.createElement("div",null,
     React.createElement("div",{style:{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}},
       ROUND_NAMES.map((name,i)=>{
@@ -524,6 +590,10 @@ function Phase3({rounds,setRounds,onComplete}){
           onEdit:()=>editMatch(activeRound,mi),
         }))
       ),
+      !rounds[activeRound].every(m=>m.confirmed)&&
+        React.createElement("div",{style:{textAlign:"center",marginTop:20}},
+          React.createElement("button",{onClick:autoSimulateActiveRound,style:secBtn},`🎲 Simular ${ROUND_NAMES[activeRound]}`)
+        ),
       rounds[activeRound].every(m=>m.confirmed)&&activeRound<ROUND_NAMES.length-1&&
         React.createElement("div",{style:{textAlign:"center",marginTop:20}},
           React.createElement("button",{onClick:()=>setActiveRound(activeRound+1),style:primaryBtn},`▶ Ver ${ROUND_NAMES[activeRound+1]}`)
