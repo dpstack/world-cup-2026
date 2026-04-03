@@ -130,20 +130,20 @@ function initIcState(){
 function initRoutesState(){
   return [
     { 
-      semis: [ completedMatch("🏴󠁧󠁢󠁷󠁬󠁳󠁿 Gales", "🇧🇦 Bosnia", 0, 1), completedMatch("🇮🇹 Italia", "🇬🇧 Irlanda del Norte", 1, 0) ],
-      final: completedMatch("🇧🇦 Bosnia", "🇮🇹 Italia", 1, 0)
+      semis: [ completedMatch("🏴󠁧󠁢󠁷󠁬󠁳󠁿 Gales", "🇧🇦 Bosnia", 1, 1, 2, 4), completedMatch("🇮🇹 Italia", "🇬🇧 Irlanda del Norte", 2, 0) ],
+      final: completedMatch("🇧🇦 Bosnia", "🇮🇹 Italia", 1, 1, 4, 1)
     },
     { 
-      semis: [ completedMatch("🇺🇦 Ucrania", "🇸🇪 Suecia", 0, 1), completedMatch("🇵🇱 Polonia", "🇦🇱 Albania", 1, 0) ],
-      final: completedMatch("🇸🇪 Suecia", "🇵🇱 Polonia", 1, 0)
+      semis: [ completedMatch("🇺🇦 Ucrania", "🇸🇪 Suecia", 1, 3), completedMatch("🇵🇱 Polonia", "🇦🇱 Albania", 2, 1) ],
+      final: completedMatch("🇸🇪 Suecia", "🇵🇱 Polonia", 3, 2)
     },
     { 
-      semis: [ completedMatch("🇹🇷 Turquía", "🇷🇴 Rumanía", 1, 0), completedMatch("🇸🇰 Eslovaquia", "🇽🇰 Kosovo", 1, 0) ],
-      final: completedMatch("🇹🇷 Turquía", "🇸🇰 Eslovaquia", 1, 0)
+      semis: [ completedMatch("🇹🇷 Turquía", "🇷🇴 Rumanía", 1, 0), completedMatch("🇸🇰 Eslovaquia", "🇽🇰 Kosovo", 3, 4) ],
+      final: completedMatch("🇹🇷 Turquía", "🇽🇰 Kosovo", 1, 0)
     },
     { 
-      semis: [ completedMatch("🇩🇰 Dinamarca", "🇲🇰 Macedonia N.", 0, 1), completedMatch("🇨🇿 Rep. Checa", "🇮🇪 Irlanda", 1, 0) ],
-      final: completedMatch("🇲🇰 Macedonia N.", "🇨🇿 Rep. Checa", 0, 1)
+      semis: [ completedMatch("🇩🇰 Dinamarca", "🇲🇰 Macedonia N.", 4, 0), completedMatch("🇨🇿 Rep. Checa", "🇮🇪 Irlanda", 2, 2, 4, 3) ],
+      final: completedMatch("🇩🇰 Dinamarca", "🇨🇿 Rep. Checa", 2, 2, 1, 3)
     }
   ];
 }
