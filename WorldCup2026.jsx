@@ -64,6 +64,9 @@ const ROUND_NAMES = ["16avos de Final","Octavos de Final","Cuartos de Final","Se
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 function emptyMatch(t1,t2){return{t1:t1||"",t2:t2||"",g1:"",g2:"",p1:"",p2:"",confirmed:false,winner:null};}
+function completedMatch(t1,t2,g1,g2,p1="",p2=""){
+  return {t1, t2, g1:String(g1), g2:String(g2), p1:String(p1), p2:String(p2), confirmed:true, winner:resolveWinner(t1,t2,g1,g2,p1,p2)};
+}
 
 function makeGroupMatches(teams){
   if(teams.length === 4) {
@@ -114,15 +117,35 @@ function resolveWinner(t1,t2,g1,g2,p1,p2){
 
 function initIcState(){
   return{
-    semis:IC_SEMIS_META.map(m=>emptyMatch(m.t1,m.t2)),
-    finals:IC_FINALS_META.map(m=>emptyMatch("",m.seed)),
+    semis: [
+      completedMatch("🇳🇨 Nueva Caledonia", "🇯🇲 Jamaica", 0, 1),
+      completedMatch("🇧🇴 Bolivia", "🇸🇷 Surinam", 2, 1)
+    ],
+    finals: [
+      completedMatch("🇯🇲 Jamaica", "🇨🇩 RD Congo", 0, 1),
+      completedMatch("🇧🇴 Bolivia", "🇮🇶 Irak", 1, 2)
+    ],
   };
 }
 function initRoutesState(){
-  return PLAYOFF_ROUTES.map(r=>({
-    semis:r.semis.map(s=>emptyMatch(s.t1,s.t2)),
-    final:emptyMatch("",""),
-  }));
+  return [
+    { 
+      semis: [ completedMatch("🏴󠁧󠁢󠁷󠁬󠁳󠁿 Gales", "🇧🇦 Bosnia", 0, 1), completedMatch("🇮🇹 Italia", "🇬🇧 Irlanda del Norte", 1, 0) ],
+      final: completedMatch("🇧🇦 Bosnia", "🇮🇹 Italia", 1, 0)
+    },
+    { 
+      semis: [ completedMatch("🇺🇦 Ucrania", "🇸🇪 Suecia", 0, 1), completedMatch("🇵🇱 Polonia", "🇦🇱 Albania", 1, 0) ],
+      final: completedMatch("🇸🇪 Suecia", "🇵🇱 Polonia", 1, 0)
+    },
+    { 
+      semis: [ completedMatch("🇹🇷 Turquía", "🇷🇴 Rumanía", 1, 0), completedMatch("🇸🇰 Eslovaquia", "🇽🇰 Kosovo", 1, 0) ],
+      final: completedMatch("🇹🇷 Turquía", "🇸🇰 Eslovaquia", 1, 0)
+    },
+    { 
+      semis: [ completedMatch("🇩🇰 Dinamarca", "🇲🇰 Macedonia N.", 0, 1), completedMatch("🇨🇿 Rep. Checa", "🇮🇪 Irlanda", 1, 0) ],
+      final: completedMatch("🇲🇰 Macedonia N.", "🇨🇿 Rep. Checa", 0, 1)
+    }
+  ];
 }
 
 // ─── STYLE HELPERS ─────────────────────────────────────────────────────────
