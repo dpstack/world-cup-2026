@@ -596,35 +596,58 @@ function Phase2({groupData,setGroupData,onComplete}){
 }
 
 // ─── BRACKET BUILDER ───────────────────────────────────────────────────────
+function allocateThirds(best8Thirds) {
+  const slots = [
+    "ABCDF", "CDFGH", "BEFIJ", "AEHIJ",
+    "CEFHI", "EHIJK", "EFGIJ", "DEIJL"
+  ];
+  const result = new Array(8).fill(null);
+  const used = new Array(8).fill(false);
+  function backtrack(idx) {
+    if (idx === 8) return true;
+    for (let i = 0; i < 8; i++) {
+        if (!used[i] && slots[idx].includes(best8Thirds[i].group)) {
+            used[i] = true;
+            result[idx] = best8Thirds[i];
+            if (backtrack(idx + 1)) return true;
+            used[i] = false;
+            result[idx] = null;
+        }
+    }
+    return false;
+  }
+  if(!backtrack(0)) return best8Thirds; // fallback
+  return result;
+}
+
 function buildBracket(groupData){
   const { firsts, seconds, thirds } = getLiveStandings(groupData);
-  const best8Firsts = firsts.slice(0, 8);
-  const bottom4Firsts = firsts.slice(8, 12);
-  const best8Seconds = seconds.slice(0, 8);
-  const bottom4Seconds = seconds.slice(8, 12);
+  const getTeam = (arr, group) => {
+     const t = arr.find(x => x.group === group);
+     return t ? t.team : "TBD";
+  };
   const best8Thirds = thirds.slice(0, 8);
-
-  const safeTeam = (arr, i) => arr[i] ? arr[i].team : "TBD";
-
+  const placedThirds = allocateThirds(best8Thirds);
+  const safe3 = (idx) => placedThirds[idx] ? placedThirds[idx].team : "TBD";
+  
   const pairs=[
-    [safeTeam(best8Firsts, 0), safeTeam(best8Thirds, 7)],
-    [safeTeam(best8Firsts, 1), safeTeam(best8Thirds, 6)],
-    [safeTeam(best8Firsts, 2), safeTeam(best8Thirds, 5)],
-    [safeTeam(best8Firsts, 3), safeTeam(best8Thirds, 4)],
-    [safeTeam(best8Firsts, 4), safeTeam(best8Thirds, 3)],
-    [safeTeam(best8Firsts, 5), safeTeam(best8Thirds, 2)],
-    [safeTeam(best8Firsts, 6), safeTeam(best8Thirds, 1)],
-    [safeTeam(best8Firsts, 7), safeTeam(best8Thirds, 0)],
+    [getTeam(firsts, "E"), safe3(0)],
+    [getTeam(firsts, "I"), safe3(1)],
+    [getTeam(seconds, "A"), getTeam(seconds, "B")],
+    [getTeam(firsts, "F"), getTeam(seconds, "C")],
+    [getTeam(seconds, "K"), getTeam(seconds, "L")],
+    [getTeam(firsts, "H"), getTeam(seconds, "J")],
+    [getTeam(firsts, "D"), safe3(2)],
+    [getTeam(firsts, "G"), safe3(3)],
     
-    [safeTeam(bottom4Firsts, 0), safeTeam(bottom4Seconds, 3)],
-    [safeTeam(bottom4Firsts, 1), safeTeam(bottom4Seconds, 2)],
-    [safeTeam(bottom4Firsts, 2), safeTeam(bottom4Seconds, 1)],
-    [safeTeam(bottom4Firsts, 3), safeTeam(bottom4Seconds, 0)],
-
-    [safeTeam(best8Seconds, 0), safeTeam(best8Seconds, 7)],
-    [safeTeam(best8Seconds, 1), safeTeam(best8Seconds, 6)],
-    [safeTeam(best8Seconds, 2), safeTeam(best8Seconds, 5)],
-    [safeTeam(best8Seconds, 3), safeTeam(best8Seconds, 4)],
+    [getTeam(firsts, "C"), getTeam(seconds, "F")],
+    [getTeam(seconds, "E"), getTeam(seconds, "I")],
+    [getTeam(firsts, "A"), safe3(4)],
+    [getTeam(firsts, "L"), safe3(5)],
+    [getTeam(firsts, "J"), getTeam(seconds, "H")],
+    [getTeam(seconds, "D"), getTeam(seconds, "G")],
+    [getTeam(firsts, "B"), safe3(6)],
+    [getTeam(firsts, "K"), safe3(7)]
   ];
   return pairs.map(([t1,t2])=>emptyMatch(t1,t2));
 }
