@@ -26,13 +26,15 @@ function getConnectorPaths(base) {
 }
 
 // ── DRAG MODE MATCH CARD ──────────────────────────────────────────────────
-function DragMatchCard({ match, ri, mi, onSelectWinner }) {
+function DragMatchCard({ match, ri, mi, onSelectWinner, onEdit }) {
   const { t1, t2, winner, confirmed } = match;
+
+  const bothDefined = !!t1 && !!t2;
 
   const TeamRow = ({ team }) => {
     const isWinner = confirmed && winner === team;
     const isLoser  = confirmed && winner !== team;
-    const canClick = !confirmed && !!team;
+    const canClick = !confirmed && !!team && bothDefined;
     return (
       <div
         onClick={() => canClick && onSelectWinner(ri, mi, team)}
@@ -54,13 +56,21 @@ function DragMatchCard({ match, ri, mi, onSelectWinner }) {
 
   return (
     <div style={{
-      width: MATCH_WIDTH, background: confirmed ? 'rgba(64,224,128,0.06)' : 'rgba(18,22,28,0.85)',
-      border: `1px solid ${confirmed ? C.borderGreen : 'rgba(240,192,64,0.18)'}`,
+      width: MATCH_WIDTH,
+      background: confirmed ? 'rgba(64,224,128,0.06)' : bothDefined ? 'rgba(18,22,28,0.85)' : 'rgba(10,13,18,0.7)',
+      border: `1px solid ${confirmed ? C.borderGreen : bothDefined ? 'rgba(240,192,64,0.18)' : 'rgba(255,255,255,0.07)'}`,
       borderRadius: 10, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-      overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', transition: 'border 0.3s',
+      overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', transition: 'all 0.3s',
     }}>
-      <div style={{ fontSize: 9, color: C.gold, letterSpacing: 2, padding: '4px 12px', background: 'rgba(0,0,0,0.35)', fontFamily: font }}>
-        {ROUND_NAMES[ri]} · #{mi + 1}
+      <div style={{ fontSize: 9, color: bothDefined ? C.gold : '#444', letterSpacing: 2, padding: '4px 12px', background: 'rgba(0,0,0,0.35)', fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>{ROUND_NAMES[ri]} · #{mi + 1}{!bothDefined && !confirmed && <span style={{ marginLeft: 6, color: '#555' }}>· esperando rival…</span>}</span>
+        {confirmed && (
+          <button
+            onClick={() => onEdit(ri, mi)}
+            title="Cambiar ganador"
+            style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, padding: '0 2px', lineHeight: 1 }}
+          >↩</button>
+        )}
       </div>
       <TeamRow team={t1} />
       <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 12px' }} />
@@ -68,6 +78,7 @@ function DragMatchCard({ match, ri, mi, onSelectWinner }) {
     </div>
   );
 }
+
 
 // ── SCORE MODE MATCH CARD ─────────────────────────────────────────────────
 function ScoreMatchCard({ match, ri, mi, onPatch, onConfirm, onEdit }) {
@@ -128,7 +139,7 @@ export function BracketView({ rounds, mode, onPatch, onConfirm, onEdit, onSelect
             <div key={`${ri}-${mi}`} style={{ position: 'absolute', left: colX, top: topY, zIndex: 1 }}>
               {match ? (
                 mode === 'drag'
-                  ? <DragMatchCard match={match} ri={ri} mi={mi} onSelectWinner={onSelectWinner} />
+                  ? <DragMatchCard match={match} ri={ri} mi={mi} onSelectWinner={onSelectWinner} onEdit={onEdit} />
                   : <ScoreMatchCard match={match} ri={ri} mi={mi} onPatch={onPatch} onConfirm={onConfirm} onEdit={onEdit} />
               ) : (
                 <div style={{
