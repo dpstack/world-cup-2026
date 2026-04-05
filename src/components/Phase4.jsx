@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { C, font, tdBase, ROUND_NAMES } from '../constants.js';
 import { MiniLabel } from './ui/Typography.jsx';
+import confetti from 'canvas-confetti';
+import { playStadiumRoar } from '../utils/audio.js';
 
 export function Phase4({ rounds, champion }) {
+  useEffect(() => {
+    if (champion) {
+      playStadiumRoar(4);
+      confetti({
+        particleCount: 250,
+        spread: 120,
+        origin: { y: 0.5 },
+        colors: [C.gold, C.green, '#ffffff', '#e0d8c8']
+      });
+    }
+  }, [champion]);
+
   if (!champion) return <div style={{ color: "#777", textAlign: "center", padding: 40, fontFamily: font }}>No hay campeón aún.</div>;
   const path = rounds.map((round, i) => {
     const m = round.find(m => m.winner === champion);

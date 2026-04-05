@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { GROUP_KEYS, PLAYOFF_ROUTES, BASE_GROUPS, font, C } from './constants.js';
 import { initIcState, initRoutesState, makeGroupMatches, buildBracket } from './utils/helpers.js';
@@ -10,8 +10,12 @@ import { Phase4 } from './components/Phase4.jsx';
 import { CountriesGallery } from './components/CountriesGallery.jsx';
 import { CapitalsQuiz } from './components/quiz/CapitalsQuiz.jsx';
 import { Beautiful404 } from './components/Beautiful404.jsx';
+import { useGameConfig } from './context/GameContext.jsx';
+import { OnboardingModal } from './components/ui/OnboardingModal.jsx';
+import { flagFromCode } from './data/countries.js';
 
 export default function WorldCup2026() {
+  const { favoriteTeam, achievements, unlockAchievement } = useGameConfig();
   const location = useLocation();
   const navigate = useNavigate();
   const [phase, setPhase] = useLocalStorageState('wc2026_phase', 0);
@@ -63,17 +67,46 @@ export default function WorldCup2026() {
 
   const champion = rounds[4] && rounds[4][0] ? rounds[4][0].winner : null;
 
+  useEffect(() => {
+    if (champion) {
+      unlockAchievement('nostradamus', { name: "Nostradamus", icon: "🏆" });
+    }
+  }, [champion, unlockAchievement]);
+
   return (
     <div style={{ minHeight: "100vh", background: "radial-gradient(circle at 40% 5%, #1f1a10 0%, #080e14 60%)", color: "#e0d8c8", fontFamily: font, padding: "20px 10px" }}>
+      <OnboardingModal />
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         
         {/* HEADER */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30, flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 32, letterSpacing: -1, background: "linear-gradient(135deg, #f0c040 0%, #fff8e0 50%, #c89010 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              World Cup 2026
-            </h1>
-            <div style={{ fontSize: 13, color: "#888", marginTop: 4, letterSpacing: 1 }}>SIMULADOR OFICIAL</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 32, letterSpacing: -1, background: "linear-gradient(135deg, #f0c040 0%, #fff8e0 50%, #c89010 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                World Cup 2026
+              </h1>
+              <div style={{ fontSize: 13, color: "#888", marginTop: 4, letterSpacing: 1 }}>SIMULADOR OFICIAL</div>
+            </div>
+            
+            {/* VITRINA DE TROFEOS Y EQUIPO FAVORITO */}
+            {(favoriteTeam || achievements.length > 0) && (
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20 }}>
+                {favoriteTeam && (
+                  <div title={`Tu selección: ${favoriteTeam.nameEs}`} style={{ fontSize: 22, borderRight: achievements.length > 0 ? "1px solid rgba(255,255,255,0.1)" : "none", paddingRight: achievements.length > 0 ? 12 : 0 }}>
+                    {flagFromCode(favoriteTeam.code)}
+                  </div>
+                )}
+                {achievements.length > 0 && (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {achievements.map(a => (
+                      <div key={a.id} title={`${a.name} - ${a.date}`} style={{ fontSize: 20, filter: "drop-shadow(0 0 8px rgba(240,192,64,0.4))" }}>
+                        {a.icon}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="tabs-container">

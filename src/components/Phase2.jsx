@@ -4,8 +4,11 @@ import { computeTable, solveMatch, getLiveStandings } from '../utils/helpers.js'
 import { Card } from './ui/Card.jsx';
 import { GoldTitle, MiniLabel } from './ui/Typography.jsx';
 import { ScoreBox } from './ui/ScoreBox.jsx';
+import { useGameConfig } from '../context/GameContext.jsx';
+import { playWhistle } from '../utils/audio.js';
 
 function GroupPanel({ gk, gd, onUpdate }) {
+  const { favoriteTeam } = useGameConfig();
   const { teams, matches, tieBreakers } = gd;
   const table = computeTable(teams, matches, tieBreakers);
   const allConfirmed = matches.every(m => m.confirmed);
@@ -52,10 +55,12 @@ function GroupPanel({ gk, gd, onUpdate }) {
             {table.map((row, i) => {
               const dg = row.gf - row.gc;
               const q = allConfirmed && i < 2;
+              const isFav = favoriteTeam && row.team === favoriteTeam.nameEs;
+
               return (
-                <tr key={row.team} style={{ background: q ? "rgba(64,224,128,0.07)" : "transparent", backdropFilter: q ? "blur(4px)" : "none", WebkitBackdropFilter: q ? "blur(4px)" : "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <td style={{ ...tdBase, color: q ? C.green : "#777", fontWeight: 700 }}>{i + 1}</td>
-                  <td style={{ ...tdBase, textAlign: "left", color: "#e0d8c8", fontSize: 12 }}>{row.team}</td>
+                <tr key={row.team} style={{ background: isFav ? "rgba(240,192,64,0.15)" : q ? "rgba(64,224,128,0.07)" : "transparent", backdropFilter: q ? "blur(4px)" : "none", WebkitBackdropFilter: q ? "blur(4px)" : "none", borderBottom: `1px solid ${isFav ? 'rgba(240,192,64,0.3)' : 'rgba(255,255,255,0.04)'}` }}>
+                  <td style={{ ...tdBase, color: isFav ? C.gold : q ? C.green : "#777", fontWeight: 700 }}>{i + 1}</td>
+                  <td style={{ ...tdBase, textAlign: "left", color: isFav ? C.gold : "#e0d8c8", fontSize: 12, fontWeight: isFav ? 700 : 400 }}>{row.team} {isFav && '★'}</td>
                   <td style={{ ...tdBase }}>{row.pj}</td>
                   <td style={{ ...tdBase }}>{row.gf}</td>
                   <td style={{ ...tdBase }}>{row.gc}</td>
@@ -75,6 +80,7 @@ function GroupPanel({ gk, gd, onUpdate }) {
 }
 
 function StandingsTable({ title, data, cutoffIndex, cutColor, normalColor }) {
+  const { favoriteTeam } = useGameConfig();
   if (!data || data.length === 0) return null;
   return (
     <div style={{ marginBottom: 20 }}>
@@ -86,12 +92,17 @@ function StandingsTable({ title, data, cutoffIndex, cutColor, normalColor }) {
         <tbody>
           {data.map((t, i) => {
             const passes = i < cutoffIndex;
-            const style = { borderBottom: `1px solid rgba(255,255,255,0.05)`, color: passes ? cutColor : normalColor };
+            const isFav = favoriteTeam && t.team === favoriteTeam.nameEs;
+            const style = { 
+              background: isFav ? 'rgba(240,192,64,0.15)' : 'transparent',
+              borderBottom: `1px solid ${isFav ? 'rgba(240,192,64,0.3)' : 'rgba(255,255,255,0.05)'}`, 
+              color: isFav ? C.gold : (passes ? cutColor : normalColor) 
+            };
             return (
               <tr key={t.team} style={style}>
-                <td style={{ padding: "6px 0", color: "rgba(255,255,255,0.3)" }}>{i + 1}</td>
+                <td style={{ padding: "6px 0", color: isFav ? C.gold : "rgba(255,255,255,0.3)" }}>{i + 1}</td>
                 <td style={{ fontWeight: "bold" }}>{t.group}</td>
-                <td>{t.team}</td>
+                <td style={{ fontWeight: isFav ? 700 : 400 }}>{t.team} {isFav && '★'}</td>
                 <td style={{ fontWeight: "bold" }}>{t.pts}</td>
                 <td>{t.gf - t.gc}</td>
                 <td>{t.gf}</td>
@@ -120,15 +131,53 @@ export function Phase2({ groupData, setGroupData, onComplete }) {
   const [activeGroup, setActiveGroup] = useState("A");
   const allDone = GROUP_KEYS.every(k => groupData[k] && groupData[k].matches.every(m => m.confirmed));
 
+  const [isSimulating, setIsSimulating] = useState(false);
+
   function autoSimulateGroup() {
-    setGroupData(prev => ({ ...prev, [activeGroup]: { ...prev[activeGroup], matches: prev[activeGroup].matches.map(m => solveMatch(m, true)) } }));
+    if (isSimulating) return;
+    setIsSimulating(true);
+    let ticks = 0;
+    const finalMatches = groupData[activeGroup].matches.map(m => solveMatch(m, true));
+    
+    const iv = setInterval(() => {
+      ticks++;
+      if (ticks >= 15) {
+        clearInterval(iv);
+        setGroupData(prev => ({ ...prev, [activeGroup]: { ...prev[activeGroup], matches: finalMatches } }));
+        setIsSimulating(false);
+        playWhistle();
+      } else {
+        setGroupData(prev => ({
+          ...prev, [activeGroup]: {
+            ...prev[activeGroup], matches: prev[activeGroup].matches.map(m => ({ ...m, g1: Math.floor(Math.random() * 5), g2: Math.floor(Math.random() * 5) }))
+          }
+        }));
+      }
+    }, 35);
   }
+
   function autoSimulateAll() {
-    setGroupData(prev => {
-      const next = { ...prev };
-      GROUP_KEYS.forEach(k => { next[k] = { ...next[k], matches: next[k].matches.map(m => solveMatch(m, true)) }; });
-      return next;
-    });
+    if (isSimulating) return;
+    setIsSimulating(true);
+    let ticks = 0;
+    const nextFinal = {};
+    GROUP_KEYS.forEach(k => { nextFinal[k] = { ...groupData[k], matches: groupData[k].matches.map(m => solveMatch(m, true)) }; });
+
+    const iv = setInterval(() => {
+      ticks++;
+      if (ticks >= 15) {
+        clearInterval(iv);
+        setGroupData(prev => ({ ...prev, ...nextFinal }));
+        setIsSimulating(false);
+        playWhistle();
+      } else {
+        setGroupData(prev => {
+          const next = { ...prev };
+          GROUP_KEYS.forEach(k => { next[k] = { ...next[k], matches: next[k].matches.map(m => ({ ...m, g1: Math.floor(Math.random() * 5), g2: Math.floor(Math.random() * 5) })) }; });
+          return next;
+        });
+      }
+    }, 35);
   }
 
   return (
@@ -153,8 +202,8 @@ export function Phase2({ groupData, setGroupData, onComplete }) {
             <GroupPanel gk={activeGroup} gd={groupData[activeGroup]} onUpdate={updated => setGroupData(prev => ({ ...prev, [activeGroup]: updated }))} />
           </Card>
           <div style={{ textAlign: "center", marginTop: 28, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            {!allDone && <button onClick={autoSimulateGroup} style={secBtn}>🎲 Simular Grupo {activeGroup}</button>}
-            {!allDone && <button onClick={autoSimulateAll} style={secBtn}>🎲 Simular Todos los Grupos</button>}
+            {!allDone && <button disabled={isSimulating} onClick={autoSimulateGroup} style={{...secBtn, opacity: isSimulating ? 0.5 : 1}}>🎲 Simular Grupo {activeGroup}</button>}
+            {!allDone && <button disabled={isSimulating} onClick={autoSimulateAll} style={{...secBtn, opacity: isSimulating ? 0.5 : 1}}>🎲 Simular Todos los Grupos</button>}
             {allDone && <button onClick={onComplete} style={primaryBtn}>▶ Generar Cuadro Eliminatorio</button>}
           </div>
         </div>}

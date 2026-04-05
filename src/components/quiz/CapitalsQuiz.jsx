@@ -3,6 +3,9 @@ import { C, font, primaryBtn, secBtn } from '../../constants.js';
 import { COUNTRIES, flagFromCode } from '../../data/countries.js';
 import { CAPITAL_ES } from '../../data/capitalTranslations.js';
 import { DIFFICULTY_CONFIG } from '../../data/quizPools.js';
+import { useGameConfig } from '../../context/GameContext.jsx';
+import { playDing, playBuzzer } from '../../utils/audio.js';
+import confetti from 'canvas-confetti';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function shuffle(arr) {
@@ -109,8 +112,9 @@ function StartScreen({ onStart }) {
       <Section label="Modo">
         <div style={{ display: 'flex', gap: 10 }}>
           {[
-            { key: 'flash', icon: '⚡', label: 'Flash', desc: 'Preguntas ajustables' },
-            { key: 'full',  icon: '🏆', label: 'Completo', desc: `${pool.length} preguntas` },
+            { key: 'flash', icon: '⚡', label: 'Flash', desc: 'Corto' },
+            { key: 'full',  icon: '🏆', label: 'Completo', desc: `Todo` },
+            { key: 'survival', icon: '💀', label: 'Muerte Súbita', desc: `Infinito` },
           ].map(m => {
             const active = mode === m.key;
             return (
@@ -145,7 +149,7 @@ function StartScreen({ onStart }) {
       </Section>
 
       <button
-        onClick={() => onStart({ difficulty, mode, count: mode === 'flash' ? flashCount : pool.length })}
+        onClick={() => onStart({ difficulty, mode, count: mode === 'flash' ? flashCount : (mode === 'full' ? pool.length : Infinity) })}
         style={{ ...primaryBtn, width: '100%', marginTop: 8, fontSize: 16 }}
       >
         Comenzar Quiz →
@@ -164,13 +168,19 @@ function Section({ label, children }) {
 }
 
 // ── QUESTION SCREEN ────────────────────────────────────────────────────────
-function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, streak, score, onAnswer }) {
+function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, streak, score, onAnswer, mode }) {
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [selected, setSelected] = useState(null);
+  const [usedFifty, setUsedFifty] = useState(false);
+  const [usedExtraTime, setUsedExtraTime] = useState(false);
+  const [eliminated, setEliminated] = useState([]);
 
   useEffect(() => {
     setTimeLeft(timeLimit);
     setSelected(null);
+    setUsedFifty(false);
+    setUsedExtraTime(false);
+    setEliminated([]);
   }, [question, timeLimit]);
 
   useEffect(() => {
@@ -185,9 +195,28 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
   }, [selected, question]);
 
   function handleSelect(opt) {
-    if (selected !== null) return;
+    if (selected !== null || eliminated.includes(opt)) return;
     setSelected(opt);
-    setTimeout(() => onAnswer(opt, timeLeft), 900);
+    if (opt === correct) {
+      playDing();
+    } else {
+      playBuzzer();
+    }
+    setTimeout(() => onAnswer(opt, timeLeft, usedFifty), 900);
+  }
+
+  function handleFifty() {
+    if (usedFifty || selected !== null) return;
+    setUsedFifty(true);
+    const wrongs = options.filter(o => o !== correct);
+    const toE = shuffle(wrongs).slice(0, 2);
+    setEliminated(toE);
+  }
+
+  function handleExtraTime() {
+    if (usedExtraTime || selected !== null) return;
+    setUsedExtraTime(true);
+    setTimeLeft(t => t + 5);
   }
 
   const { country, correct, options } = question;
@@ -200,7 +229,7 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
     <div style={{ maxWidth: 500, margin: '0 auto' }}>
       {/* Progress + stats bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <span style={{ fontFamily: font, fontSize: 12, color: '#666' }}>{questionNum} / {totalQuestions}</span>
+        <span style={{ fontFamily: font, fontSize: 12, color: '#666' }}>{mode === 'survival' ? `Pregunta ${questionNum}` : `${questionNum} / ${totalQuestions}`}</span>
         {streak >= 1 && (
           <span style={{ fontFamily: font, fontSize: 12, color: C.gold, fontWeight: 700 }}>
             🔥 Racha x{mult.toFixed(1)}
@@ -210,9 +239,11 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 24, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${(questionNum - 1) / totalQuestions * 100}%`, background: C.gold, transition: 'width 0.3s' }} />
-      </div>
+      {mode !== 'survival' && (
+        <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 24, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${(questionNum - 1) / totalQuestions * 100}%`, background: C.gold, transition: 'width 0.3s' }} />
+        </div>
+      )}
 
       {/* Timer ring */}
       <div style={{ textAlign: 'center', marginBottom: 8 }}>
@@ -231,8 +262,26 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
         <div style={{ fontFamily: font, fontSize: 10, color: '#555', letterSpacing: 1.5, marginTop: 4 }}>{country.code} · {country.region}</div>
       </div>
 
-      <div style={{ fontFamily: font, fontSize: 11, color: '#666', textAlign: 'center', marginBottom: 14, letterSpacing: 1 }}>
-        ¿CUÁL ES SU CAPITAL?
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={handleFifty} disabled={usedFifty || selected !== null} style={{
+            padding: '6px 12px', borderRadius: 8, border: `1px solid ${usedFifty ? 'rgba(255,255,255,0)' : 'rgba(240,192,64,0.3)'}`,
+            background: usedFifty ? 'rgba(255,255,255,0.02)' : 'rgba(240,192,64,0.1)', color: usedFifty ? '#555' : C.gold,
+            fontSize: 12, fontFamily: font, fontWeight: 700, cursor: usedFifty ? 'default' : 'pointer', transition: 'all 0.2s',
+          }}>
+            🌗 50/50
+          </button>
+          <button onClick={handleExtraTime} disabled={usedExtraTime || selected !== null} style={{
+            padding: '6px 12px', borderRadius: 8, border: `1px solid ${usedExtraTime ? 'rgba(255,255,255,0)' : 'rgba(64,224,128,0.3)'}`,
+            background: usedExtraTime ? 'rgba(255,255,255,0.02)' : 'rgba(64,224,128,0.1)', color: usedExtraTime ? '#555' : C.green,
+            fontSize: 12, fontFamily: font, fontWeight: 700, cursor: usedExtraTime ? 'default' : 'pointer', transition: 'all 0.2s',
+          }}>
+            ⏱️ +5s
+          </button>
+        </div>
+        <div style={{ fontFamily: font, fontSize: 11, color: '#666', letterSpacing: 1 }}>
+          ¿CUÁL ES SU CAPITAL?
+        </div>
       </div>
 
       {/* Options */}
@@ -240,6 +289,7 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
         {options.map((opt, i) => {
           const isCorrect = opt === correct;
           const isSelected = selected === opt;
+          const isEliminated = eliminated.includes(opt);
           const showResult = selected !== null;
           let bg = 'rgba(255,255,255,0.04)';
           let border = 'rgba(255,255,255,0.08)';
@@ -247,11 +297,12 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
           if (showResult && isCorrect)  { bg = 'rgba(64,224,128,0.15)'; border = C.green; color = C.green; }
           if (showResult && isSelected && !isCorrect) { bg = 'rgba(240,96,96,0.15)'; border = C.red; color = C.red; }
           return (
-            <button key={i} onClick={() => handleSelect(opt)} disabled={selected !== null} style={{
-              padding: '14px 12px', borderRadius: 12, cursor: selected !== null ? 'default' : 'pointer',
+            <button key={i} onClick={() => handleSelect(opt)} disabled={showResult || isEliminated} style={{
+              padding: '14px 12px', borderRadius: 12, cursor: (showResult || isEliminated) ? 'default' : 'pointer',
               border: `2px solid ${border}`, background: bg, color, fontFamily: font, fontWeight: 600,
               fontSize: 14, textAlign: 'center', transition: 'all 0.2s',
               transform: showResult && isCorrect ? 'scale(1.02)' : 'scale(1)',
+              opacity: isEliminated ? 0.2 : 1, textDecoration: isEliminated ? 'line-through' : 'none'
             }}>
               {opt}
             </button>
@@ -264,14 +315,35 @@ function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, stre
 
 // ── RESULTS SCREEN ─────────────────────────────────────────────────────────
 function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart, onHome }) {
+  const { unlockAchievement } = useGameConfig();
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const correct = answers.filter(a => a.isCorrect).length;
   const pct = Math.round((correct / answers.length) * 100);
 
+  useEffect(() => {
+    if (pct === 100 && mode === 'full' && (difficulty === 'hard' || difficulty === 'expert')) {
+      unlockAchievement('quiz_master', { name: "Mente Maestra", icon: "🧠" });
+    }
+  }, [pct, mode, difficulty, unlockAchievement]);
+
   const hsKey = `wc2026_quiz_hs_${difficulty}_${mode}`;
   const prev = JSON.parse(localStorage.getItem(hsKey) || 'null');
-  const isNewRecord = !prev || score > prev.score;
-  if (isNewRecord) localStorage.setItem(hsKey, JSON.stringify({ score: Math.round(score), pct, date: new Date().toLocaleDateString('es') }));
+  
+  const recordMetric = mode === 'survival' ? correct : Math.round(score);
+  const prevMetric = prev ? (mode === 'survival' ? prev.correct : prev.score) : 0;
+  
+  const isNewRecord = !prev || recordMetric > prevMetric;
+  useEffect(() => {
+    if (isNewRecord && recordMetric > 0) {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: [C.gold, C.green, C.border, '#ffffff']
+      });
+    }
+  }, [isNewRecord, recordMetric]);
+  if (isNewRecord) localStorage.setItem(hsKey, JSON.stringify({ score: Math.round(score), pct, correct, date: new Date().toLocaleDateString('es') }));
 
   const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 60 ? '👍' : pct >= 40 ? '😅' : '💀';
 
@@ -285,10 +357,20 @@ function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart
 
       {/* Score */}
       <div style={{ padding: '24px', background: 'rgba(240,192,64,0.08)', border: `1px solid rgba(240,192,64,0.2)`, borderRadius: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: font, fontSize: 48, fontWeight: 900, color: C.gold, lineHeight: 1 }}>{Math.round(score)}</div>
-        <div style={{ fontFamily: font, fontSize: 12, color: '#888', marginTop: 4 }}>puntos</div>
+        {mode === 'survival' ? (
+          <>
+            <div style={{ fontFamily: font, fontSize: 48, fontWeight: 900, color: C.gold, lineHeight: 1 }}>{correct}</div>
+            <div style={{ fontFamily: font, fontSize: 13, color: '#888', marginTop: 8 }}>aciertos consecutivos</div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontFamily: font, fontSize: 48, fontWeight: 900, color: C.gold, lineHeight: 1 }}>{Math.round(score)}</div>
+            <div style={{ fontFamily: font, fontSize: 12, color: '#888', marginTop: 4 }}>puntos</div>
+          </>
+        )}
+        
         {isNewRecord && <div style={{ fontFamily: font, fontSize: 12, color: C.green, marginTop: 8, fontWeight: 700 }}>✨ ¡Nuevo récord personal!</div>}
-        {prev && !isNewRecord && <div style={{ fontFamily: font, fontSize: 11, color: '#555', marginTop: 6 }}>Récord: {prev.score} pts ({prev.date})</div>}
+        {prev && !isNewRecord && <div style={{ fontFamily: font, fontSize: 11, color: '#555', marginTop: 6 }}>Récord: {mode === 'survival' ? `${prev.correct || 0} al hilo` : `${prev.score} pts`} ({prev.date})</div>}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
@@ -354,13 +436,16 @@ export function CapitalsQuiz() {
     setScreen('question');
   }
 
-  function handleAnswer(selected, timeLeft) {
+  function handleAnswer(selected, timeLeft, usedFifty) {
     const q = questions[currentIdx];
     const isCorrect = selected === q.correct;
     const newStreak = isCorrect ? streak + 1 : 0;
     const mult = streakMultiplier(streak);
     const timeLimit = DIFFICULTY_CONFIG[config.difficulty].time;
-    const points = isCorrect ? (100 + Math.round((timeLeft / timeLimit) * 50)) * mult : 0;
+    
+    const basePts = isCorrect ? (100 + Math.round((timeLeft / timeLimit) * 50)) : 0;
+    const fiftyPenalty = usedFifty ? 0.5 : 1;
+    const points = basePts * mult * fiftyPenalty;
     const newScore = score + points;
 
     setStreak(newStreak);
@@ -368,8 +453,20 @@ export function CapitalsQuiz() {
     setAnswers(prev => [...prev, { country: q.country, correct: q.correct, userAnswer: selected, isCorrect }]);
 
     const nextIdx = currentIdx + 1;
-    if (nextIdx >= questions.length) {
+    
+    if (config.mode === 'survival' && !isCorrect) {
       setTimeout(() => setScreen('results'), 900);
+      return;
+    }
+
+    if (nextIdx >= questions.length) {
+      if (config.mode === 'survival') {
+        const pool = buildPool(config.difficulty);
+        setQuestions(prev => [...prev, ...buildQuestions(pool, Infinity)]);
+        setTimeout(() => setCurrentIdx(nextIdx), 900);
+      } else {
+        setTimeout(() => setScreen('results'), 900);
+      }
     } else {
       setTimeout(() => setCurrentIdx(nextIdx), 900);
     }
@@ -389,6 +486,7 @@ export function CapitalsQuiz() {
         streak={streak}
         score={score}
         onAnswer={handleAnswer}
+        mode={config.mode}
       />
     );
   }
