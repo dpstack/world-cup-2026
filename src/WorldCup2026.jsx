@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { GROUP_KEYS, PLAYOFF_ROUTES, BASE_GROUPS, font, C } from './constants.js';
 import { initIcState, initRoutesState, makeGroupMatches, buildBracket } from './utils/helpers.js';
 import { useLocalStorageState } from './hooks/useLocalStorageState.js';
@@ -8,11 +9,16 @@ import { Phase3 } from './components/Phase3.jsx';
 import { Phase4 } from './components/Phase4.jsx';
 import { CountriesGallery } from './components/CountriesGallery.jsx';
 import { CapitalsQuiz } from './components/quiz/CapitalsQuiz.jsx';
+import { Beautiful404 } from './components/Beautiful404.jsx';
 
 export default function WorldCup2026() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [phase, setPhase] = useLocalStorageState('wc2026_phase', 0);
-  const [showCountries, setShowCountries] = useState(false);
-  const [showQuiz, setShowQuiz] = useState(false);
+  const [viewPhase, setViewPhase] = useState(null);
+  
+  const currentView = viewPhase !== null ? viewPhase : phase;
+
   const [ic, setIc] = useLocalStorageState('wc2026_ic', initIcState);
   const [routes, setRoutes] = useLocalStorageState('wc2026_routes', initRoutesState);
   const [groupData, setGroupData] = useLocalStorageState('wc2026_groupData', {});
@@ -26,6 +32,7 @@ export default function WorldCup2026() {
     window.localStorage.removeItem('wc2026_groupData');
     window.localStorage.removeItem('wc2026_rounds');
     setPhase(0);
+    setViewPhase(null);
     setIc(initIcState());
     setRoutes(initRoutesState());
     setGroupData({});
@@ -45,11 +52,13 @@ export default function WorldCup2026() {
     });
     setGroupData(data);
     setPhase(1);
+    setViewPhase(1);
   }
 
   function handlePhase2Complete() {
     setRounds([buildBracket(groupData)]);
     setPhase(2);
+    setViewPhase(2);
   }
 
   const champion = rounds[4] && rounds[4][0] ? rounds[4][0].winner : null;
@@ -69,19 +78,22 @@ export default function WorldCup2026() {
           
           <div className="tabs-container">
             {["Repechaje", "Fase de Grupos", "Eliminatorias", "Campeón"].map((label, i) => {
-              const active = !showCountries && phase === i;
-              const past = phase > i;
+              const active = location.pathname === '/' && currentView === i;
+              const isUnlocked = phase >= i;
               return (
                 <button
                   key={i}
-                  onClick={() => { setShowCountries(false); past && setPhase(i); }}
-                  disabled={!past && !active}
+                  onClick={() => { 
+                    navigate('/');
+                    if (isUnlocked) setViewPhase(i); 
+                  }}
+                  disabled={!isUnlocked && location.pathname === '/'}
                   style={{
                     padding: "8px 20px", borderRadius: 20, whiteSpace: "nowrap",
-                    border: active ? "1px solid rgba(240,192,64,0.4)" : past ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-                    background: active ? "rgba(240,192,64,0.1)" : past ? "rgba(255,255,255,0.03)" : "transparent",
-                    color: active ? "#f0c040" : past ? "#ccc" : "#555",
-                    fontWeight: active ? 700 : 500, cursor: past || active ? "pointer" : "default", fontSize: 14, fontFamily: font,
+                    border: active ? "1px solid rgba(240,192,64,0.4)" : isUnlocked ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+                    background: active ? "rgba(240,192,64,0.1)" : isUnlocked ? "rgba(255,255,255,0.03)" : "transparent",
+                    color: active ? "#f0c040" : isUnlocked ? "#ccc" : "#555",
+                    fontWeight: active ? 700 : 500, cursor: isUnlocked || location.pathname !== '/' ? "pointer" : "default", fontSize: 14, fontFamily: font,
                     transition: "all 0.2s"
                   }}
                 >
@@ -91,51 +103,58 @@ export default function WorldCup2026() {
             })}
             {/* Separator */}
             <span style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)', alignSelf: 'center', margin: '0 4px' }} />
-            <button
-              onClick={() => setShowCountries(v => !v)}
-              style={{
+            <NavLink
+              to="/countries"
+              style={({ isActive }) => ({
+                textDecoration: "none",
+                display: "inline-block",
                 padding: "8px 20px", borderRadius: 20, whiteSpace: "nowrap",
-                border: showCountries ? `1px solid rgba(64,224,128,0.5)` : "1px solid rgba(255,255,255,0.1)",
-                background: showCountries ? "rgba(64,224,128,0.12)" : "rgba(255,255,255,0.03)",
-                color: showCountries ? C.green : "#888",
-                fontWeight: showCountries ? 700 : 500, cursor: "pointer", fontSize: 14, fontFamily: font,
+                border: isActive ? `1px solid rgba(64,224,128,0.5)` : "1px solid rgba(255,255,255,0.1)",
+                background: isActive ? "rgba(64,224,128,0.12)" : "rgba(255,255,255,0.03)",
+                color: isActive ? C.green : "#888",
+                fontWeight: isActive ? 700 : 500, cursor: "pointer", fontSize: 14, fontFamily: font,
                 transition: "all 0.2s"
-              }}
+              })}
             >
               🌍 Países
-            </button>
-            <button
-              onClick={() => { setShowQuiz(v => !v); setShowCountries(false); }}
-              style={{
+            </NavLink>
+            <NavLink
+              to="/quiz"
+              style={({ isActive }) => ({
+                textDecoration: "none",
+                display: "inline-block",
                 padding: "8px 20px", borderRadius: 20, whiteSpace: "nowrap",
-                border: showQuiz ? `1px solid rgba(240,192,64,0.5)` : "1px solid rgba(255,255,255,0.1)",
-                background: showQuiz ? "rgba(240,192,64,0.12)" : "rgba(255,255,255,0.03)",
-                color: showQuiz ? C.gold : "#888",
-                fontWeight: showQuiz ? 700 : 500, cursor: "pointer", fontSize: 14, fontFamily: font,
+                border: isActive ? `1px solid rgba(240,192,64,0.5)` : "1px solid rgba(255,255,255,0.1)",
+                background: isActive ? "rgba(240,192,64,0.12)" : "rgba(255,255,255,0.03)",
+                color: isActive ? C.gold : "#888",
+                fontWeight: isActive ? 700 : 500, cursor: "pointer", fontSize: 14, fontFamily: font,
                 transition: "all 0.2s"
-              }}
+              })}
             >
               🧠 Quiz
-            </button>
+            </NavLink>
           </div>
         </div>
 
         {/* CONTENT */}
         <div style={{ minHeight: "60vh" }}>
-          {showQuiz ? (
-            <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px', background: 'rgba(18,22,28,0.6)', border: '1px solid rgba(240,192,64,0.12)', borderRadius: 20, backdropFilter: 'blur(20px)' }}>
-              <CapitalsQuiz />
-            </div>
-          ) : showCountries ? (
-            <CountriesGallery />
-          ) : (
-            <>
-              {phase === 0 && <Phase1 ic={ic} setIc={setIc} routes={routes} setRoutes={setRoutes} onComplete={handlePhase1Complete} />}
-              {phase === 1 && <Phase2 groupData={groupData} setGroupData={setGroupData} onComplete={handlePhase2Complete} />}
-              {phase === 2 && <Phase3 rounds={rounds} setRounds={setRounds} onComplete={() => setPhase(3)} />}
-              {phase === 3 && <Phase4 rounds={rounds} champion={champion} />}
-            </>
-          )}
+          <Routes>
+            <Route path="/" element={
+              <>
+                {currentView === 0 && <Phase1 ic={ic} setIc={setIc} routes={routes} setRoutes={setRoutes} onComplete={handlePhase1Complete} />}
+                {currentView === 1 && <Phase2 groupData={groupData} setGroupData={setGroupData} onComplete={handlePhase2Complete} />}
+                {currentView === 2 && <Phase3 rounds={rounds} setRounds={setRounds} onComplete={() => { setPhase(3); setViewPhase(3); }} />}
+                {currentView === 3 && <Phase4 rounds={rounds} champion={champion} />}
+              </>
+            } />
+            <Route path="/countries" element={<CountriesGallery />} />
+            <Route path="/quiz" element={
+              <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px', background: 'rgba(18,22,28,0.6)', border: '1px solid rgba(240,192,64,0.12)', borderRadius: 20, backdropFilter: 'blur(20px)' }}>
+                <CapitalsQuiz />
+              </div>
+            } />
+            <Route path="*" element={<Beautiful404 />} />
+          </Routes>
         </div>
 
         {/* FOOTER */}

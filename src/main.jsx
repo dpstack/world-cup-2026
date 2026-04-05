@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import WorldCup2026 from './WorldCup2026.jsx';
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
+import { BrowserRouter } from 'react-router-dom';
 
 polyfillCountryFlagEmojis();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <WorldCup2026 />
+    <BrowserRouter basename="/world-cup-2026">
+      <WorldCup2026 />
+    </BrowserRouter>
   </React.StrictMode>,
 );
