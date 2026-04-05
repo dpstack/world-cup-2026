@@ -1,14 +1,16 @@
-import React from 'react';
-import { GROUP_KEYS, PLAYOFF_ROUTES, BASE_GROUPS, font } from './constants.js';
+import React, { useState } from 'react';
+import { GROUP_KEYS, PLAYOFF_ROUTES, BASE_GROUPS, font, C } from './constants.js';
 import { initIcState, initRoutesState, makeGroupMatches, buildBracket } from './utils/helpers.js';
 import { useLocalStorageState } from './hooks/useLocalStorageState.js';
 import { Phase1 } from './components/Phase1.jsx';
 import { Phase2 } from './components/Phase2.jsx';
 import { Phase3 } from './components/Phase3.jsx';
 import { Phase4 } from './components/Phase4.jsx';
+import { CountriesGallery } from './components/CountriesGallery.jsx';
 
 export default function WorldCup2026() {
   const [phase, setPhase] = useLocalStorageState('wc2026_phase', 0);
+  const [showCountries, setShowCountries] = useState(false);
   const [ic, setIc] = useLocalStorageState('wc2026_ic', initIcState);
   const [routes, setRoutes] = useLocalStorageState('wc2026_routes', initRoutesState);
   const [groupData, setGroupData] = useLocalStorageState('wc2026_groupData', {});
@@ -65,12 +67,12 @@ export default function WorldCup2026() {
           
           <div className="tabs-container">
             {["Repechaje", "Fase de Grupos", "Eliminatorias", "Campeón"].map((label, i) => {
-              const active = phase === i;
+              const active = !showCountries && phase === i;
               const past = phase > i;
               return (
                 <button
                   key={i}
-                  onClick={() => past && setPhase(i)}
+                  onClick={() => { setShowCountries(false); past && setPhase(i); }}
                   disabled={!past && !active}
                   style={{
                     padding: "8px 20px", borderRadius: 20, whiteSpace: "nowrap",
@@ -85,15 +87,36 @@ export default function WorldCup2026() {
                 </button>
               );
             })}
+            {/* Separator */}
+            <span style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)', alignSelf: 'center', margin: '0 4px' }} />
+            <button
+              onClick={() => setShowCountries(v => !v)}
+              style={{
+                padding: "8px 20px", borderRadius: 20, whiteSpace: "nowrap",
+                border: showCountries ? `1px solid rgba(64,224,128,0.5)` : "1px solid rgba(255,255,255,0.1)",
+                background: showCountries ? "rgba(64,224,128,0.12)" : "rgba(255,255,255,0.03)",
+                color: showCountries ? C.green : "#888",
+                fontWeight: showCountries ? 700 : 500, cursor: "pointer", fontSize: 14, fontFamily: font,
+                transition: "all 0.2s"
+              }}
+            >
+              🌍 Países
+            </button>
           </div>
         </div>
 
         {/* CONTENT */}
         <div style={{ minHeight: "60vh" }}>
-          {phase === 0 && <Phase1 ic={ic} setIc={setIc} routes={routes} setRoutes={setRoutes} onComplete={handlePhase1Complete} />}
-          {phase === 1 && <Phase2 groupData={groupData} setGroupData={setGroupData} onComplete={handlePhase2Complete} />}
-          {phase === 2 && <Phase3 rounds={rounds} setRounds={setRounds} onComplete={() => setPhase(3)} />}
-          {phase === 3 && <Phase4 rounds={rounds} champion={champion} />}
+          {showCountries ? (
+            <CountriesGallery />
+          ) : (
+            <>
+              {phase === 0 && <Phase1 ic={ic} setIc={setIc} routes={routes} setRoutes={setRoutes} onComplete={handlePhase1Complete} />}
+              {phase === 1 && <Phase2 groupData={groupData} setGroupData={setGroupData} onComplete={handlePhase2Complete} />}
+              {phase === 2 && <Phase3 rounds={rounds} setRounds={setRounds} onComplete={() => setPhase(3)} />}
+              {phase === 3 && <Phase4 rounds={rounds} champion={champion} />}
+            </>
+          )}
         </div>
 
         {/* FOOTER */}
