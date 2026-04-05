@@ -20,9 +20,7 @@ function getCapitalEs(c) {
 
 function buildPool(difficulty) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
-  const codes = cfg.pool
-    ? new Set(cfg.pool)
-    : new Set(COUNTRIES.map(c => c.code)); // expert = all
+  const codes = new Set(cfg.pool);
   return COUNTRIES.filter(c => codes.has(c.code) && c.capital);
 }
 
@@ -69,20 +67,38 @@ function StartScreen({ onStart }) {
 
       {/* Difficulty */}
       <Section label="Dificultad">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {Object.entries(DIFFICULTY_CONFIG).map(([key, cfg]) => {
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+          {Object.entries(DIFFICULTY_CONFIG).slice(0, 3).map(([key, cfg]) => {
             const pool = buildPool(key);
             const active = difficulty === key;
             return (
               <button key={key} onClick={() => setDifficulty(key)} style={{
-                padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                padding: '12px 8px', borderRadius: 12, cursor: 'pointer',
                 border: `2px solid ${active ? cfg.color : 'rgba(255,255,255,0.07)'}`,
                 background: active ? `${cfg.color}18` : 'rgba(255,255,255,0.03)',
-                transition: 'all 0.2s', textAlign: 'left',
+                transition: 'all 0.2s', textAlign: 'center',
               }}>
-                <div style={{ fontSize: 18, marginBottom: 4 }}>{cfg.icon}</div>
-                <div style={{ fontFamily: font, fontWeight: 700, color: active ? cfg.color : '#aaa', fontSize: 14 }}>{cfg.label}</div>
-                <div style={{ fontFamily: font, color: '#555', fontSize: 11 }}>{pool.length} países · {cfg.time}s/pregunta</div>
+                <div style={{ fontSize: 16, marginBottom: 4 }}>{cfg.icon}</div>
+                <div style={{ fontFamily: font, fontWeight: 700, color: active ? cfg.color : '#aaa', fontSize: 13 }}>{cfg.label}</div>
+                <div style={{ fontFamily: font, color: '#555', fontSize: 10 }}>{pool.length} · {cfg.time}s</div>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {Object.entries(DIFFICULTY_CONFIG).slice(3).map(([key, cfg]) => {
+            const pool = buildPool(key);
+            const active = difficulty === key;
+            return (
+              <button key={key} onClick={() => setDifficulty(key)} style={{
+                padding: '12px 8px', borderRadius: 12, cursor: 'pointer',
+                border: `2px solid ${active ? cfg.color : 'rgba(255,255,255,0.07)'}`,
+                background: active ? `${cfg.color}18` : 'rgba(255,255,255,0.03)',
+                transition: 'all 0.2s', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 16, marginBottom: 4 }}>{cfg.icon}</div>
+                <div style={{ fontFamily: font, fontWeight: 700, color: active ? cfg.color : '#aaa', fontSize: 13 }}>{cfg.label}</div>
+                <div style={{ fontFamily: font, color: '#555', fontSize: 10 }}>{pool.length} · {cfg.time}s</div>
               </button>
             );
           })}
