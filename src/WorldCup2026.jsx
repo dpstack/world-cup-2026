@@ -7,10 +7,12 @@ import { Phase2 } from './components/Phase2.jsx';
 import { Phase3 } from './components/Phase3.jsx';
 import { Phase4 } from './components/Phase4.jsx';
 import { CountriesGallery } from './components/CountriesGallery.jsx';
+import { CapitalsQuiz } from './components/quiz/CapitalsQuiz.jsx';
 
 export default function WorldCup2026() {
   const [phase, setPhase] = useLocalStorageState('wc2026_phase', 0);
   const [showCountries, setShowCountries] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
   const [ic, setIc] = useLocalStorageState('wc2026_ic', initIcState);
   const [routes, setRoutes] = useLocalStorageState('wc2026_routes', initRoutesState);
   const [groupData, setGroupData] = useLocalStorageState('wc2026_groupData', {});
@@ -102,12 +104,29 @@ export default function WorldCup2026() {
             >
               🌍 Países
             </button>
+            <button
+              onClick={() => { setShowQuiz(v => !v); setShowCountries(false); }}
+              style={{
+                padding: "8px 20px", borderRadius: 20, whiteSpace: "nowrap",
+                border: showQuiz ? `1px solid rgba(240,192,64,0.5)` : "1px solid rgba(255,255,255,0.1)",
+                background: showQuiz ? "rgba(240,192,64,0.12)" : "rgba(255,255,255,0.03)",
+                color: showQuiz ? C.gold : "#888",
+                fontWeight: showQuiz ? 700 : 500, cursor: "pointer", fontSize: 14, fontFamily: font,
+                transition: "all 0.2s"
+              }}
+            >
+              🧠 Quiz
+            </button>
           </div>
         </div>
 
         {/* CONTENT */}
         <div style={{ minHeight: "60vh" }}>
-          {showCountries ? (
+          {showQuiz ? (
+            <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px', background: 'rgba(18,22,28,0.6)', border: '1px solid rgba(240,192,64,0.12)', borderRadius: 20, backdropFilter: 'blur(20px)' }}>
+              <CapitalsQuiz />
+            </div>
+          ) : showCountries ? (
             <CountriesGallery />
           ) : (
             <>

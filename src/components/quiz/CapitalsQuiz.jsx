@@ -1,0 +1,395 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { C, font, primaryBtn, secBtn } from '../../constants.js';
+import { COUNTRIES, flagFromCode } from '../../data/countries.js';
+import { CAPITAL_ES } from '../../data/capitalTranslations.js';
+import { DIFFICULTY_CONFIG } from '../../data/quizPools.js';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getCapitalEs(c) {
+  return CAPITAL_ES[c.capital] || c.capital || null;
+}
+
+function buildPool(difficulty) {
+  const cfg = DIFFICULTY_CONFIG[difficulty];
+  const codes = cfg.pool
+    ? new Set(cfg.pool)
+    : new Set(COUNTRIES.map(c => c.code)); // expert = all
+  return COUNTRIES.filter(c => codes.has(c.code) && c.capital);
+}
+
+function buildQuestions(pool, count) {
+  const shuffled = shuffle(pool).slice(0, count);
+  return shuffled.map(country => {
+    const correct = getCapitalEs(country);
+    const distractors = shuffle(pool.filter(c => c.code !== country.code && c.capital))
+      .slice(0, 3)
+      .map(c => getCapitalEs(c));
+    const options = shuffle([correct, ...distractors]);
+    return { country, correct, options };
+  });
+}
+
+function streakMultiplier(streak) {
+  if (streak >= 9) return 3;
+  if (streak >= 6) return 2.5;
+  if (streak >= 3) return 2;
+  if (streak >= 1) return 1.5;
+  return 1;
+}
+
+// ── SCREENS ────────────────────────────────────────────────────────────────
+
+function StartScreen({ onStart }) {
+  const [difficulty, setDifficulty] = useState('easy');
+  const [mode, setMode] = useState('flash');
+  const [flashCount, setFlashCount] = useState(5);
+
+  const cfg = DIFFICULTY_CONFIG[difficulty];
+  const pool = buildPool(difficulty);
+  const maxFlash = pool.length;
+
+  return (
+    <div style={{ maxWidth: 500, margin: '0 auto', padding: '20px 0' }}>
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ fontSize: 48 }}>🧠</div>
+        <h2 style={{ margin: '8px 0 4px', fontSize: 26, fontFamily: font, background: `linear-gradient(135deg, ${C.gold}, #fff8e0)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Quiz de Capitales
+        </h2>
+        <p style={{ color: '#666', fontFamily: font, fontSize: 13, margin: 0 }}>¿Cuánto sabes del mundo?</p>
+      </div>
+
+      {/* Difficulty */}
+      <Section label="Dificultad">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {Object.entries(DIFFICULTY_CONFIG).map(([key, cfg]) => {
+            const pool = buildPool(key);
+            const active = difficulty === key;
+            return (
+              <button key={key} onClick={() => setDifficulty(key)} style={{
+                padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                border: `2px solid ${active ? cfg.color : 'rgba(255,255,255,0.07)'}`,
+                background: active ? `${cfg.color}18` : 'rgba(255,255,255,0.03)',
+                transition: 'all 0.2s', textAlign: 'left',
+              }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{cfg.icon}</div>
+                <div style={{ fontFamily: font, fontWeight: 700, color: active ? cfg.color : '#aaa', fontSize: 14 }}>{cfg.label}</div>
+                <div style={{ fontFamily: font, color: '#555', fontSize: 11 }}>{pool.length} países · {cfg.time}s/pregunta</div>
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Mode */}
+      <Section label="Modo">
+        <div style={{ display: 'flex', gap: 10 }}>
+          {[
+            { key: 'flash', icon: '⚡', label: 'Flash', desc: 'Preguntas ajustables' },
+            { key: 'full',  icon: '🏆', label: 'Completo', desc: `${pool.length} preguntas` },
+          ].map(m => {
+            const active = mode === m.key;
+            return (
+              <button key={m.key} onClick={() => setMode(m.key)} style={{
+                flex: 1, padding: '14px', borderRadius: 12, cursor: 'pointer',
+                border: `2px solid ${active ? C.gold : 'rgba(255,255,255,0.07)'}`,
+                background: active ? 'rgba(240,192,64,0.1)' : 'rgba(255,255,255,0.03)',
+                transition: 'all 0.2s',
+              }}>
+                <div style={{ fontSize: 22 }}>{m.icon}</div>
+                <div style={{ fontFamily: font, fontWeight: 700, color: active ? C.gold : '#aaa', fontSize: 14, marginTop: 4 }}>{m.label}</div>
+                <div style={{ fontFamily: font, color: '#555', fontSize: 11 }}>{m.desc}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {mode === 'flash' && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontFamily: font, fontSize: 12, color: '#888' }}>Cantidad de preguntas</span>
+              <span style={{ fontFamily: font, fontSize: 14, fontWeight: 700, color: C.gold }}>{flashCount}</span>
+            </div>
+            <input type="range" min={3} max={maxFlash} value={flashCount}
+              onChange={e => setFlashCount(Number(e.target.value))}
+              style={{ width: '100%', accentColor: C.gold }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: font, fontSize: 10, color: '#444', marginTop: 2 }}>
+              <span>3</span><span>{maxFlash}</span>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      <button
+        onClick={() => onStart({ difficulty, mode, count: mode === 'flash' ? flashCount : pool.length })}
+        style={{ ...primaryBtn, width: '100%', marginTop: 8, fontSize: 16 }}
+      >
+        Comenzar Quiz →
+      </button>
+    </div>
+  );
+}
+
+function Section({ label, children }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontFamily: font, fontSize: 10, color: '#666', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+// ── QUESTION SCREEN ────────────────────────────────────────────────────────
+function QuestionScreen({ question, questionNum, totalQuestions, timeLimit, streak, score, onAnswer }) {
+  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    setTimeLeft(timeLimit);
+    setSelected(null);
+  }, [question, timeLimit]);
+
+  useEffect(() => {
+    if (selected !== null) return;
+    const iv = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) { clearInterval(iv); onAnswer(null, 0); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [selected, question]);
+
+  function handleSelect(opt) {
+    if (selected !== null) return;
+    setSelected(opt);
+    setTimeout(() => onAnswer(opt, timeLeft), 900);
+  }
+
+  const { country, correct, options } = question;
+  const flag = flagFromCode(country.code);
+  const pct = (timeLeft / timeLimit) * 100;
+  const timerColor = pct > 50 ? C.green : pct > 25 ? '#e0c040' : C.red;
+  const mult = streakMultiplier(streak);
+
+  return (
+    <div style={{ maxWidth: 500, margin: '0 auto' }}>
+      {/* Progress + stats bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontFamily: font, fontSize: 12, color: '#666' }}>{questionNum} / {totalQuestions}</span>
+        {streak >= 1 && (
+          <span style={{ fontFamily: font, fontSize: 12, color: C.gold, fontWeight: 700 }}>
+            🔥 Racha x{mult.toFixed(1)}
+          </span>
+        )}
+        <span style={{ fontFamily: font, fontSize: 12, color: '#888', fontWeight: 700 }}>{Math.round(score)} pts</span>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 24, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${(questionNum - 1) / totalQuestions * 100}%`, background: C.gold, transition: 'width 0.3s' }} />
+      </div>
+
+      {/* Timer ring */}
+      <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 14px', borderRadius: 20, background: `${timerColor}18`, border: `1px solid ${timerColor}44` }}>
+          <span style={{ fontFamily: font, fontWeight: 700, color: timerColor, fontSize: 14 }}>{timeLeft}s</span>
+          <div style={{ width: 80, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: timerColor, transition: 'width 1s linear, background 0.5s' }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Country card */}
+      <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, marginBottom: 20 }}>
+        <div style={{ fontSize: 72, lineHeight: 1, fontFamily: "'Twemoji Country Flags', 'Segoe UI Emoji', sans-serif", marginBottom: 12 }}>{flag}</div>
+        <div style={{ fontFamily: font, fontSize: 22, fontWeight: 700, color: '#f0e8cc' }}>{country.nameEs}</div>
+        <div style={{ fontFamily: font, fontSize: 10, color: '#555', letterSpacing: 1.5, marginTop: 4 }}>{country.code} · {country.region}</div>
+      </div>
+
+      <div style={{ fontFamily: font, fontSize: 11, color: '#666', textAlign: 'center', marginBottom: 14, letterSpacing: 1 }}>
+        ¿CUÁL ES SU CAPITAL?
+      </div>
+
+      {/* Options */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {options.map((opt, i) => {
+          const isCorrect = opt === correct;
+          const isSelected = selected === opt;
+          const showResult = selected !== null;
+          let bg = 'rgba(255,255,255,0.04)';
+          let border = 'rgba(255,255,255,0.08)';
+          let color = '#d0c8b8';
+          if (showResult && isCorrect)  { bg = 'rgba(64,224,128,0.15)'; border = C.green; color = C.green; }
+          if (showResult && isSelected && !isCorrect) { bg = 'rgba(240,96,96,0.15)'; border = C.red; color = C.red; }
+          return (
+            <button key={i} onClick={() => handleSelect(opt)} disabled={selected !== null} style={{
+              padding: '14px 12px', borderRadius: 12, cursor: selected !== null ? 'default' : 'pointer',
+              border: `2px solid ${border}`, background: bg, color, fontFamily: font, fontWeight: 600,
+              fontSize: 14, textAlign: 'center', transition: 'all 0.2s',
+              transform: showResult && isCorrect ? 'scale(1.02)' : 'scale(1)',
+            }}>
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── RESULTS SCREEN ─────────────────────────────────────────────────────────
+function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart, onHome }) {
+  const cfg = DIFFICULTY_CONFIG[difficulty];
+  const correct = answers.filter(a => a.isCorrect).length;
+  const pct = Math.round((correct / answers.length) * 100);
+
+  const hsKey = `wc2026_quiz_hs_${difficulty}_${mode}`;
+  const prev = JSON.parse(localStorage.getItem(hsKey) || 'null');
+  const isNewRecord = !prev || score > prev.score;
+  if (isNewRecord) localStorage.setItem(hsKey, JSON.stringify({ score: Math.round(score), pct, date: new Date().toLocaleDateString('es') }));
+
+  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 60 ? '👍' : pct >= 40 ? '😅' : '💀';
+
+  return (
+    <div style={{ maxWidth: 500, margin: '0 auto', textAlign: 'center' }}>
+      <div style={{ fontSize: 56, marginBottom: 8 }}>{emoji}</div>
+      <h2 style={{ margin: '0 0 4px', fontFamily: font, fontSize: 24, color: '#f0e8cc' }}>Resultado Final</h2>
+      <p style={{ fontFamily: font, color: '#666', fontSize: 13, margin: '0 0 24px' }}>
+        {cfg.icon} {cfg.label} · {mode === 'flash' ? `Flash ${flashCount}` : 'Completo'}
+      </p>
+
+      {/* Score */}
+      <div style={{ padding: '24px', background: 'rgba(240,192,64,0.08)', border: `1px solid rgba(240,192,64,0.2)`, borderRadius: 16, marginBottom: 16 }}>
+        <div style={{ fontFamily: font, fontSize: 48, fontWeight: 900, color: C.gold, lineHeight: 1 }}>{Math.round(score)}</div>
+        <div style={{ fontFamily: font, fontSize: 12, color: '#888', marginTop: 4 }}>puntos</div>
+        {isNewRecord && <div style={{ fontFamily: font, fontSize: 12, color: C.green, marginTop: 8, fontWeight: 700 }}>✨ ¡Nuevo récord personal!</div>}
+        {prev && !isNewRecord && <div style={{ fontFamily: font, fontSize: 11, color: '#555', marginTop: 6 }}>Récord: {prev.score} pts ({prev.date})</div>}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+        <StatBox label="Correctas" value={correct} max={answers.length} color={C.green} />
+        <StatBox label="Acierto" value={`${pct}%`} color={C.gold} />
+        <StatBox label="Incorrectas" value={answers.length - correct} color={C.red} />
+      </div>
+
+      {/* Wrong answers review */}
+      {answers.filter(a => !a.isCorrect).length > 0 && (
+        <div style={{ marginBottom: 20, textAlign: 'left' }}>
+          <div style={{ fontFamily: font, fontSize: 10, color: '#666', letterSpacing: 2, marginBottom: 10 }}>RESPUESTAS INCORRECTAS</div>
+          {answers.filter(a => !a.isCorrect).map((a, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(240,96,96,0.05)', border: '1px solid rgba(240,96,96,0.1)', borderRadius: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 22, fontFamily: "'Twemoji Country Flags', 'Segoe UI Emoji', sans-serif" }}>{flagFromCode(a.country.code)}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: font, fontSize: 12, color: '#aaa' }}>{a.country.nameEs}</div>
+                <div style={{ fontFamily: font, fontSize: 12, color: C.green, fontWeight: 700 }}>{a.correct}</div>
+              </div>
+              {a.userAnswer && <div style={{ fontFamily: font, fontSize: 11, color: C.red }}>{a.userAnswer}</div>}
+              {!a.userAnswer && <div style={{ fontFamily: font, fontSize: 11, color: '#555' }}>Tiempo agotado</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 12 }}>
+        <button onClick={onRestart} style={{ ...primaryBtn, flex: 1 }}>🔄 Jugar de nuevo</button>
+        <button onClick={onHome} style={{ ...secBtn, flex: 1 }}>← Inicio</button>
+      </div>
+    </div>
+  );
+}
+
+function StatBox({ label, value, color }) {
+  return (
+    <div style={{ padding: '14px 8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12 }}>
+      <div style={{ fontFamily: font, fontSize: 22, fontWeight: 700, color }}>{value}</div>
+      <div style={{ fontFamily: font, fontSize: 10, color: '#555', marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+// ── ROOT QUIZ COMPONENT ────────────────────────────────────────────────────
+export function CapitalsQuiz() {
+  const [screen, setScreen] = useState('start');  // 'start' | 'question' | 'results'
+  const [config, setConfig] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [answers, setAnswers] = useState([]);
+
+  function handleStart(cfg) {
+    const pool = buildPool(cfg.difficulty);
+    const qs = buildQuestions(pool, cfg.count);
+    setConfig(cfg);
+    setQuestions(qs);
+    setCurrentIdx(0);
+    setScore(0);
+    setStreak(0);
+    setAnswers([]);
+    setScreen('question');
+  }
+
+  function handleAnswer(selected, timeLeft) {
+    const q = questions[currentIdx];
+    const isCorrect = selected === q.correct;
+    const newStreak = isCorrect ? streak + 1 : 0;
+    const mult = streakMultiplier(streak);
+    const timeLimit = DIFFICULTY_CONFIG[config.difficulty].time;
+    const points = isCorrect ? (100 + Math.round((timeLeft / timeLimit) * 50)) * mult : 0;
+    const newScore = score + points;
+
+    setStreak(newStreak);
+    setScore(newScore);
+    setAnswers(prev => [...prev, { country: q.country, correct: q.correct, userAnswer: selected, isCorrect }]);
+
+    const nextIdx = currentIdx + 1;
+    if (nextIdx >= questions.length) {
+      setTimeout(() => setScreen('results'), 900);
+    } else {
+      setTimeout(() => setCurrentIdx(nextIdx), 900);
+    }
+  }
+
+  if (screen === 'start') return <StartScreen onStart={handleStart} />;
+
+  if (screen === 'question') {
+    const q = questions[currentIdx];
+    const cfg = DIFFICULTY_CONFIG[config.difficulty];
+    return (
+      <QuestionScreen
+        question={q}
+        questionNum={currentIdx + 1}
+        totalQuestions={questions.length}
+        timeLimit={cfg.time}
+        streak={streak}
+        score={score}
+        onAnswer={handleAnswer}
+      />
+    );
+  }
+
+  if (screen === 'results') {
+    return (
+      <ResultsScreen
+        answers={answers}
+        score={score}
+        difficulty={config.difficulty}
+        mode={config.mode}
+        flashCount={config.count}
+        onRestart={() => handleStart(config)}
+        onHome={() => setScreen('start')}
+      />
+    );
+  }
+
+  return null;
+}
