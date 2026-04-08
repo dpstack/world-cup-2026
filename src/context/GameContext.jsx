@@ -4,8 +4,8 @@ import { useLocalStorageState } from '../hooks/useLocalStorageState';
 const GameContext = createContext();
 
 export function GameProvider({ children }) {
-  const [favoriteTeam, setFavoriteTeam] = useLocalStorageState('wc2026_favTeam', null);
-  const [achievements, setAchievements] = useLocalStorageState('wc2026_achieves', []);
+  const [favoriteTeam, setFavoriteTeam] = useLocalStorageState('wc2026_favTeam', null, (v) => v === null || (v && typeof v === 'object' && v.code));
+  const [achievements, setAchievements] = useLocalStorageState('wc2026_achieves', [], (v) => Array.isArray(v));
 
   // Use a small wrapper to add achievements
   const unlockAchievement = (id, params) => {
