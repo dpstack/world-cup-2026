@@ -21,10 +21,14 @@ function getCapitalEs(c) {
   return CAPITAL_ES[c.capital] || c.capital || null;
 }
 
+const _poolCache = {};
+
 function buildPool(difficulty) {
+  if (_poolCache[difficulty]) return _poolCache[difficulty];
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const codes = new Set(cfg.pool);
-  return COUNTRIES.filter(c => codes.has(c.code) && c.capital);
+  _poolCache[difficulty] = COUNTRIES.filter(c => codes.has(c.code) && c.capital);
+  return _poolCache[difficulty];
 }
 
 function buildQuestions(pool, count) {
@@ -333,7 +337,12 @@ function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart
     if (item) {
       const parsed = JSON.parse(item);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        prev = parsed;
+        prev = {
+          score: typeof parsed.score === 'number' ? parsed.score : 0,
+          pct: typeof parsed.pct === 'number' ? parsed.pct : 0,
+          correct: typeof parsed.correct === 'number' ? parsed.correct : 0,
+          date: typeof parsed.date === 'string' ? parsed.date : ''
+        };
       }
     }
   } catch (e) {

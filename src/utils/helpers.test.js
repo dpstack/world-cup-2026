@@ -1,4 +1,4 @@
-import { makeGroupMatches, emptyMatch } from './helpers.js';
+import { makeGroupMatches, emptyMatch, completedMatch } from './helpers.js';
 
 describe('emptyMatch', () => {
   test('should return correct match structure when provided with two teams', () => {
@@ -25,6 +25,7 @@ describe('emptyMatch', () => {
     expect(matchOneArg.t2).toBe('');
   });
 });
+
 
 describe('makeGroupMatches', () => {
   test('should return official round-robin order for 4 teams', () => {
@@ -73,5 +74,43 @@ describe('makeGroupMatches', () => {
     const teams = ['T1', 'T2', 'T3', 'T4', 'T5'];
     const matches = makeGroupMatches(teams);
     expect(matches).toHaveLength(10);
+  });
+});
+
+describe('completedMatch', () => {
+  test('should correctly identify winner when Team 1 wins without penalties', () => {
+    const match = completedMatch('Team A', 'Team B', 2, 1);
+    expect(match).toMatchObject({
+      t1: 'Team A', t2: 'Team B', g1: '2', g2: '1', p1: '', p2: '', confirmed: true, winner: 'Team A'
+    });
+  });
+
+  test('should correctly identify winner when Team 2 wins without penalties', () => {
+    const match = completedMatch('Team A', 'Team B', 0, 3);
+    expect(match).toMatchObject({
+      t1: 'Team A', t2: 'Team B', g1: '0', g2: '3', p1: '', p2: '', confirmed: true, winner: 'Team B'
+    });
+  });
+
+  test('should correctly identify winner when Team 1 wins on penalties', () => {
+    const match = completedMatch('Team A', 'Team B', 1, 1, 5, 4);
+    expect(match).toMatchObject({
+      t1: 'Team A', t2: 'Team B', g1: '1', g2: '1', p1: '5', p2: '4', confirmed: true, winner: 'Team A'
+    });
+  });
+
+  test('should correctly identify winner when Team 2 wins on penalties', () => {
+    const match = completedMatch('Team A', 'Team B', 2, 2, 3, 4);
+    expect(match).toMatchObject({
+      t1: 'Team A', t2: 'Team B', g1: '2', g2: '2', p1: '3', p2: '4', confirmed: true, winner: 'Team B'
+    });
+  });
+
+  test('should convert goals and penalties arguments to strings', () => {
+    const match = completedMatch('Team A', 'Team B', 1, 2, 0, 0);
+    expect(typeof match.g1).toBe('string');
+    expect(typeof match.g2).toBe('string');
+    expect(typeof match.p1).toBe('string');
+    expect(typeof match.p2).toBe('string');
   });
 });
