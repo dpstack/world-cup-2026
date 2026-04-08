@@ -327,7 +327,18 @@ function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart
   }, [pct, mode, difficulty, unlockAchievement]);
 
   const hsKey = `wc2026_quiz_hs_${difficulty}_${mode}`;
-  const prev = JSON.parse(localStorage.getItem(hsKey) || 'null');
+  let prev = null;
+  try {
+    const item = localStorage.getItem(hsKey);
+    if (item) {
+      const parsed = JSON.parse(item);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        prev = parsed;
+      }
+    }
+  } catch (e) {
+    console.warn("localStorage highscore error", e);
+  }
   
   const recordMetric = mode === 'survival' ? correct : Math.round(score);
   const prevMetric = prev ? (mode === 'survival' ? prev.correct : prev.score) : 0;

@@ -1,14 +1,32 @@
 import { useState, useEffect } from 'react';
 
-export function useLocalStorageState(key, initialValueFactory) {
+export function useLocalStorageState(key, initialValueFactory, validator) {
   const [state, setState] = useState(() => {
+    const initialValue = typeof initialValueFactory === 'function' ? initialValueFactory() : initialValueFactory;
     try {
       const item = window.localStorage.getItem(key);
-      if (item) return JSON.parse(item);
+      if (item !== null) {
+        const parsed = JSON.parse(item);
+
+        if (validator && typeof validator === 'function') {
+          if (validator(parsed)) return parsed;
+        } else {
+          // Basic type validation
+          if (initialValue === null || initialValue === undefined) {
+            return parsed;
+          }
+
+          if (Array.isArray(initialValue)) {
+            if (Array.isArray(parsed)) return parsed;
+          } else if (typeof parsed === typeof initialValue && parsed !== null && !Array.isArray(parsed)) {
+            return parsed;
+          }
+        }
+      }
     } catch (e) {
       console.warn("localStorage error", e);
     }
-    return typeof initialValueFactory === 'function' ? initialValueFactory() : initialValueFactory;
+    return initialValue;
   });
 
   useEffect(() => {

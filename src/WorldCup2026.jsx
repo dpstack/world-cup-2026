@@ -23,10 +23,10 @@ export default function WorldCup2026() {
   
   const currentView = viewPhase !== null ? viewPhase : phase;
 
-  const [ic, setIc] = useLocalStorageState('wc2026_ic', initIcState);
-  const [routes, setRoutes] = useLocalStorageState('wc2026_routes', initRoutesState);
-  const [groupData, setGroupData] = useLocalStorageState('wc2026_groupData', {});
-  const [rounds, setRounds] = useLocalStorageState('wc2026_rounds', []);
+  const [ic, setIc] = useLocalStorageState('wc2026_ic', initIcState, (v) => v && typeof v === 'object' && v.semis && v.finals);
+  const [routes, setRoutes] = useLocalStorageState('wc2026_routes', initRoutesState, (v) => Array.isArray(v));
+  const [groupData, setGroupData] = useLocalStorageState('wc2026_groupData', {}, (v) => v && typeof v === 'object' && !Array.isArray(v));
+  const [rounds, setRounds] = useLocalStorageState('wc2026_rounds', [], (v) => Array.isArray(v));
 
   function resetTournament() {
     if (!window.confirm("¿Estás seguro de que quieres borrar todo el torneo y empezar de cero?")) return;
