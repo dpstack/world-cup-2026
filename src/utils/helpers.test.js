@@ -1,4 +1,30 @@
-import { makeGroupMatches } from './helpers.js';
+import { makeGroupMatches, emptyMatch } from './helpers.js';
+
+describe('emptyMatch', () => {
+  test('should return correct match structure when provided with two teams', () => {
+    const match = emptyMatch('Team A', 'Team B');
+    expect(match).toEqual({
+      t1: 'Team A',
+      t2: 'Team B',
+      g1: '',
+      g2: '',
+      p1: '',
+      p2: '',
+      confirmed: false,
+      winner: null
+    });
+  });
+
+  test('should default missing teams to empty strings', () => {
+    const matchNoArgs = emptyMatch();
+    expect(matchNoArgs.t1).toBe('');
+    expect(matchNoArgs.t2).toBe('');
+
+    const matchOneArg = emptyMatch('Team A');
+    expect(matchOneArg.t1).toBe('Team A');
+    expect(matchOneArg.t2).toBe('');
+  });
+});
 
 describe('makeGroupMatches', () => {
   test('should return official round-robin order for 4 teams', () => {
