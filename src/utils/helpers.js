@@ -40,6 +40,14 @@ export function makeGroupMatches(teams) {
   return m;
 }
 
+export function compareTeams(a, b, tbA = 0, tbB = 0) {
+  if (b.pts !== a.pts) return b.pts - a.pts;
+  const da = a.gf - a.gc, db = b.gf - b.gc;
+  if (db !== da) return db - da;
+  if (b.gf !== a.gf) return b.gf - a.gf;
+  return (tbB || 0) - (tbA || 0);
+}
+
 export function computeTable(teams, matches, tieBreakers = {}) {
   const s = {};
   teams.forEach(t => { s[t] = { team: t, pj: 0, gf: 0, gc: 0, pts: 0 }; });
@@ -53,13 +61,7 @@ export function computeTable(teams, matches, tieBreakers = {}) {
     else if (g2 > g1) s[m.t2].pts += 3;
     else { s[m.t1].pts += 1; s[m.t2].pts += 1; }
   });
-  return Object.values(s).sort((a, b) => {
-    if (b.pts !== a.pts) return b.pts - a.pts;
-    const da = a.gf - a.gc, db = b.gf - b.gc;
-    if (db !== da) return db - da;
-    if (b.gf !== a.gf) return b.gf - a.gf;
-    return (tieBreakers[b.team] || 0) - (tieBreakers[a.team] || 0);
-  });
+  return Object.values(s).sort((a, b) => compareTeams(a, b, tieBreakers[a.team], tieBreakers[b.team]));
 }
 
 export function resolveWinner(t1, t2, g1, g2, p1, p2) {
@@ -134,15 +136,11 @@ export function getLiveStandings(groupData) {
   });
 
   const sortGlobal = (a, b) => {
-    if (b.pts !== a.pts) return b.pts - a.pts;
-    const da = a.gf - a.gc, db = b.gf - b.gc;
-    if (db !== da) return db - da;
-    if (b.gf !== a.gf) return b.gf - a.gf;
-    const tbB = groupData[b.group].tieBreakers ? groupData[b.group].tieBreakers[b.team] : 0;
     const tbA = groupData[a.group].tieBreakers ? groupData[a.group].tieBreakers[a.team] : 0;
-    return (tbB || 0) - (tbA || 0);
+    const tbB = groupData[b.group].tieBreakers ? groupData[b.group].tieBreakers[b.team] : 0;
+    return compareTeams(a, b, tbA, tbB);
   };
-  
+
   firsts.sort(sortGlobal);
   seconds.sort(sortGlobal);
   thirds.sort(sortGlobal);
