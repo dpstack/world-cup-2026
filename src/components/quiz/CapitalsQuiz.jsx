@@ -337,7 +337,12 @@ function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart
     if (item) {
       const parsed = JSON.parse(item);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        prev = parsed;
+        prev = {
+          score: typeof parsed.score === 'number' ? parsed.score : 0,
+          pct: typeof parsed.pct === 'number' ? parsed.pct : 0,
+          correct: typeof parsed.correct === 'number' ? parsed.correct : 0,
+          date: typeof parsed.date === 'string' ? parsed.date : ''
+        };
       }
     }
   } catch (e) {
