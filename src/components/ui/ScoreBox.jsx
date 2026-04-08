@@ -4,6 +4,7 @@ import { C, font } from '../../constants.js';
 export function ScoreBox({ value, onChange, error }) {
   return (
     <input
+      aria-label="Ingresar puntaje"
       type="number"
       min="0"
       max="99"
