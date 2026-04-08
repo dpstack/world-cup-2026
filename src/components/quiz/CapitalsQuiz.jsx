@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { C, font, primaryBtn, secBtn } from '../../constants.js';
 import { COUNTRIES, flagFromCode } from '../../data/countries.js';
 import { CAPITAL_ES } from '../../data/capitalTranslations.js';
