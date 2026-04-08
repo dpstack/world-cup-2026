@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { C, GROUP_KEYS, font, tdBase, secBtn, primaryBtn } from '../constants.js';
 import { computeTable, solveMatch, getLiveStandings } from '../utils/helpers.js';
 import { Card } from './ui/Card.jsx';
@@ -10,7 +10,7 @@ import { playWhistle } from '../utils/audio.js';
 function GroupPanel({ gk, gd, onUpdate }) {
   const { favoriteTeam } = useGameConfig();
   const { teams, matches, tieBreakers } = gd;
-  const table = computeTable(teams, matches, tieBreakers);
+  const table = useMemo(() => computeTable(teams, matches, tieBreakers), [teams, matches, tieBreakers]);
   const allConfirmed = matches.every(m => m.confirmed);
 
   function patch(idx, p) { onUpdate({ ...gd, matches: matches.map((m, i) => i === idx ? { ...m, ...p } : m) }); }
