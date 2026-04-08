@@ -116,7 +116,7 @@ function StandingsTable({ title, data, cutoffIndex, cutColor, normalColor }) {
 }
 
 function LivePanel({ groupData }) {
-  const { firsts, seconds, thirds } = getLiveStandings(groupData);
+  const { firsts, seconds, thirds } = useMemo(() => getLiveStandings(groupData), [groupData]);
   return (
     <Card style={{ maxHeight: "85vh", overflowY: "auto", padding: "16px 20px" }}>
       <GoldTitle>🏆 Clasificatorios en Vivo</GoldTitle>
