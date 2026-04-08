@@ -21,10 +21,14 @@ function getCapitalEs(c) {
   return CAPITAL_ES[c.capital] || c.capital || null;
 }
 
+const _poolCache = {};
+
 function buildPool(difficulty) {
+  if (_poolCache[difficulty]) return _poolCache[difficulty];
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const codes = new Set(cfg.pool);
-  return COUNTRIES.filter(c => codes.has(c.code) && c.capital);
+  _poolCache[difficulty] = COUNTRIES.filter(c => codes.has(c.code) && c.capital);
+  return _poolCache[difficulty];
 }
 
 function buildQuestions(pool, count) {
