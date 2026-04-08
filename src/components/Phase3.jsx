@@ -137,6 +137,7 @@ export function Phase3({ rounds, setRounds, onComplete }) {
         <button
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+          aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
           style={{
             background: 'rgba(255,255,255,0.05)', border: `1px solid rgba(240,192,64,0.2)`,
             borderRadius: 8, color: '#aaa', cursor: 'pointer',

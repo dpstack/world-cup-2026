@@ -31,7 +31,7 @@ export function MatchEntry({ match, label, onChange, onConfirm, onEdit, isKnocko
           {p1 !== "" && <div style={{ fontSize: 11, color: "#999" }}>({p1}–{p2} pen)</div>}
         </div>
         <span style={{ flex: 1, textAlign: "right", fontSize: 13, color: winner === t2 ? (isT2Fav ? C.gold : C.green) : (isT2Fav ? "#e0d8c8" : "#ccc"), fontWeight: winner === t2 ? 700 : 400, fontFamily: font }}>{t2 || "—"}</span>
-        <button onClick={onEdit} style={{ background: "none", border: "none", color: C.gold, cursor: "pointer", fontSize: 15, padding: 2 }}>✏️</button>
+        <button onClick={onEdit} aria-label="Editar resultado" title="Editar resultado" style={{ background: "none", border: "none", color: C.gold, cursor: "pointer", fontSize: 15, padding: 2 }}>✏️</button>
       </div>
     );
   }

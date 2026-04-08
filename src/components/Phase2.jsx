@@ -27,7 +27,7 @@ function GroupPanel({ gk, gd, onUpdate }) {
               <span style={{ flex: 1, fontSize: 12, color: "#ccc", fontFamily: font }}>{m.t1}</span>
               <span style={{ fontWeight: 700, color: C.green, minWidth: 40, textAlign: "center", fontSize: 15 }}>{m.g1}–{m.g2}</span>
               <span style={{ flex: 1, textAlign: "right", fontSize: 12, color: "#ccc", fontFamily: font }}>{m.t2}</span>
-              <button onClick={() => edit(i)} style={{ background: "none", border: "none", color: C.gold, cursor: "pointer", fontSize: 13 }}>✏️</button>
+              <button onClick={() => edit(i)} aria-label="Editar resultado" title="Editar resultado" style={{ background: "none", border: "none", color: C.gold, cursor: "pointer", fontSize: 13 }}>✏️</button>
             </div>
           );
           const valid = m.g1 !== "" && m.g2 !== "";
@@ -38,7 +38,7 @@ function GroupPanel({ gk, gd, onUpdate }) {
               <span style={{ color: "#444" }}>–</span>
               <ScoreBox value={m.g2} onChange={v => patch(i, { g2: v })} />
               <span style={{ flex: 1, textAlign: "right", fontSize: 12, color: "#bbb", fontFamily: font }}>{m.t2}</span>
-              <button disabled={!valid} onClick={() => confirm(i)} style={{ padding: "5px 11px", background: valid ? `linear-gradient(135deg,${C.gold},#c89010)` : "#1a1a1a", color: valid ? "#080e14" : "#444", border: "none", borderRadius: 6, cursor: valid ? "pointer" : "default", fontSize: 13, fontWeight: 700 }}>✓</button>
+              <button disabled={!valid} onClick={() => confirm(i)} aria-label="Confirmar resultado" title="Confirmar resultado" style={{ padding: "5px 11px", background: valid ? `linear-gradient(135deg,${C.gold},#c89010)` : "#1a1a1a", color: valid ? "#080e14" : "#444", border: "none", borderRadius: 6, cursor: valid ? "pointer" : "default", fontSize: 13, fontWeight: 700 }}>✓</button>
             </div>
           );
         })}
