@@ -1,4 +1,26 @@
-import { makeGroupMatches } from './helpers.js';
+import { makeGroupMatches, resolveWinner } from './helpers.js';
+
+describe('resolveWinner', () => {
+  test('should return team 1 when team 1 scores more goals', () => {
+    expect(resolveWinner('Team A', 'Team B', 2, 1)).toBe('Team A');
+    expect(resolveWinner('Team A', 'Team B', '2', '1')).toBe('Team A'); // String inputs
+  });
+
+  test('should return team 2 when team 2 scores more goals', () => {
+    expect(resolveWinner('Team A', 'Team B', 1, 2)).toBe('Team B');
+    expect(resolveWinner('Team A', 'Team B', '1', '2')).toBe('Team B'); // String inputs
+  });
+
+  test('should return team 1 when goals are tied and team 1 scores more penalties', () => {
+    expect(resolveWinner('Team A', 'Team B', 1, 1, 5, 4)).toBe('Team A');
+    expect(resolveWinner('Team A', 'Team B', '1', '1', '5', '4')).toBe('Team A'); // String inputs
+  });
+
+  test('should return team 2 when goals are tied and team 2 scores more penalties', () => {
+    expect(resolveWinner('Team A', 'Team B', 2, 2, 3, 4)).toBe('Team B');
+    expect(resolveWinner('Team A', 'Team B', '2', '2', '3', '4')).toBe('Team B'); // String inputs
+  });
+});
 
 describe('makeGroupMatches', () => {
   test('should return official round-robin order for 4 teams', () => {
