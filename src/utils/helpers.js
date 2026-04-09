@@ -48,7 +48,18 @@ export function compareTeams(a, b, tbA = 0, tbB = 0) {
   return (tbB || 0) - (tbA || 0);
 }
 
+// ⚡ Bolt Optimization: Memoize computeTable results to prevent redundant calculations
+// on every re-render of the Live Standings panel. Safe because `matches` is treated
+// immutably in React state updates.
+const _tableCache = new WeakMap();
+
 export function computeTable(teams, matches, tieBreakers = {}) {
+  // Check if we already calculated this specific matches array and tieBreakers config
+  let tableCache = _tableCache.get(matches);
+  if (tableCache && tableCache.tieBreakers === tieBreakers) {
+    return tableCache.result;
+  }
+
   const s = {};
   teams.forEach(t => { s[t] = { team: t, pj: 0, gf: 0, gc: 0, pts: 0 }; });
   matches.forEach(m => {
@@ -61,7 +72,9 @@ export function computeTable(teams, matches, tieBreakers = {}) {
     else if (g2 > g1) s[m.t2].pts += 3;
     else { s[m.t1].pts += 1; s[m.t2].pts += 1; }
   });
-  return Object.values(s).sort((a, b) => compareTeams(a, b, tieBreakers[a.team], tieBreakers[b.team]));
+  const result = Object.values(s).sort((a, b) => compareTeams(a, b, tieBreakers[a.team], tieBreakers[b.team]));
+  _tableCache.set(matches, { tieBreakers, result });
+  return result;
 }
 
 export function resolveWinner(t1, t2, g1, g2, p1, p2) {
