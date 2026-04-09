@@ -33,11 +33,31 @@ function buildPool(difficulty) {
 
 function buildQuestions(pool, count) {
   const shuffled = shuffle(pool).slice(0, count);
+
+  // Pre-calculate total items with a capital to avoid O(N) per iteration
+  const totalWithCapital = pool.reduce((sum, c) => sum + (c.capital ? 1 : 0), 0);
+
   return shuffled.map(country => {
     const correct = getCapitalEs(country);
-    const distractors = shuffle(pool.filter(c => c.code !== country.code && c.capital))
-      .slice(0, 3)
-      .map(c => getCapitalEs(c));
+    const distractors = [];
+    const used = new Set([country.code]);
+    const maxDistractors = Math.min(3, pool.length - 1);
+
+    // Safety check: ensure there are enough items with a capital
+    // If the current country has a capital, the remaining available is totalWithCapital - 1
+    // Otherwise, it's just totalWithCapital.
+    const availableWithCapital = totalWithCapital - (country.capital ? 1 : 0);
+    const targetDistractors = Math.min(maxDistractors, availableWithCapital);
+
+    while (distractors.length < targetDistractors) {
+      const idx = Math.floor(Math.random() * pool.length);
+      const c = pool[idx];
+      if (!used.has(c.code) && c.capital) {
+        used.add(c.code);
+        distractors.push(getCapitalEs(c));
+      }
+    }
+
     const options = shuffle([correct, ...distractors]);
     return { country, correct, options };
   });
