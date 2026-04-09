@@ -24,7 +24,7 @@ export function useLocalStorageState(key, initialValueFactory, validator) {
         }
       }
     } catch (e) {
-      console.warn("localStorage error", e);
+      console.warn("localStorage error: data corrupted or unreadable.");
     }
     return initialValue;
   });
