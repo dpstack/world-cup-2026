@@ -34,15 +34,33 @@ export function OnboardingModal() {
           Para una experiencia más inmersiva, elige a tu selección favorita. La seguiremos de cerca en tu Mundial.
         </p>
 
-        <input
-          placeholder="Buscar un país..."
-          value={search} onChange={e => setSearch(e.target.value)}
-          style={{
-            width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 15, fontFamily: font, marginBottom: 16,
-            outline: 'none', boxSizing: 'border-box'
-          }}
-        />
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, pointerEvents: 'none' }}>🔍</span>
+          <input
+            type="text"
+            role="searchbox"
+            aria-label="Buscar un país"
+            placeholder="Buscar un país..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 36px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 15, fontFamily: font,
+              outline: 'none', boxSizing: 'border-box'
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              aria-label="Borrar búsqueda"
+              title="Borrar búsqueda"
+              style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: '#888', fontSize: 20, cursor: 'pointer',
+                padding: '0 4px', lineHeight: 1
+              }}
+            >×</button>
+          )}
+        </div>
 
         <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, paddingBottom: 20, textAlign: 'left' }}>
           {filtered.map(c => {

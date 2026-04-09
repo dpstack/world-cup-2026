@@ -1,0 +1,3 @@
+## 2026-04-09 - Accessible Search Inputs
+**Learning:** Adding a clear ('x') button inside an input requires wrapping the input in a `relative` container. When adding clear functionality, ensuring the button has an `aria-label` and using `type="search"` significantly improves screen reader navigation and general usability. Empty states also benefit from `role="status"` to proactively alert screen readers.
+**Action:** When implementing filtering/search inputs, always default to `type="search"`, wrap in a relative div if inline buttons are needed, and ensure clear buttons have semantic `aria-label`s and empty states use `role="status"`.
