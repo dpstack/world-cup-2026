@@ -271,6 +271,7 @@ export function CountriesGallery() {
             placeholder={lang === 'es' ? 'País, código o capital…' : 'Country, code or capital…'}
             value={search}
             onChange={e => setSearch(e.target.value)}
+            maxLength={50}
             style={{
               width: '100%', boxSizing: 'border-box',
               padding: '10px 12px 10px 36px',
@@ -331,7 +332,7 @@ export function CountriesGallery() {
           </div>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3, border: '1px solid rgba(255,255,255,0.08)' }}>
             {['es', 'en'].map(l => (
-              <button key={l} onClick={() => toggleLang(l)} style={{
+              <button key={l} onClick={() => toggleLang(l)} aria-label={l === 'es' ? 'Cambiar a Español' : 'Cambiar a Inglés'} style={{
                 padding: '5px 12px', borderRadius: 6, border: 'none',
                 background: lang === l ? `linear-gradient(135deg, ${C.gold}, #c89010)` : 'transparent',
                 color: lang === l ? '#080e14' : '#666',
