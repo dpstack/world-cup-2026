@@ -31,7 +31,7 @@ function playTone({ freq = 440, type = 'sine', duration = 0.1, vol = 0.1, slide 
     osc.start();
     osc.stop(ctx.currentTime + duration);
   } catch (e) {
-    console.error("Audio block", e);
+    console.error("Audio block failed to execute.");
   }
 }
 
@@ -89,6 +89,6 @@ export function playStadiumRoar(durationSeconds = 3) {
 
     noiseSource.start();
   } catch (e) {
-    console.error("Audio block", e);
+    console.error("Audio block failed to execute.");
   }
 }
