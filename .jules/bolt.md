@@ -1,0 +1,3 @@
+## 2024-05-24 - Immutable Arrays & WeakMap Caching
+**Learning:** Caching with `WeakMap` based on immutable array references is powerful for avoiding redundant calculation. However, caution is needed when additional function parameters use default values (like `tieBreakers = {}`). Strict equality checks (`===`) on these default objects will fail since each call creates a new instance (`{} !== {}`), leading to cache misses and unbounded memory growth (memory leaks).
+**Action:** When caching derived data that relies on complex objects or default parameters, use a stable string key (e.g., via `JSON.stringify(params)`) alongside the `WeakMap` to ensure safe, constant-time `O(1)` lookups without memory leaks.
