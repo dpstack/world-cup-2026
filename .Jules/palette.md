@@ -1,0 +1,3 @@
+## 2026-04-10 - Accessible Search Inputs and Empty States
+**Learning:** Text inputs used for filtering large lists need `maxLength` to prevent client-side DoS, and empty states (like "no results") must use `role="status"` to proactively announce themselves to screen readers. Also, when adding custom clear buttons to search fields, using `type="text"` with `role="searchbox"` is preferred over `type="search"` to avoid double-clear UI glitches in Webkit browsers while preserving semantic a11y.
+**Action:** Always include `maxLength` on search inputs, apply `role="status"` to 'no results' messages, and use `type="text"` + `role="searchbox"` for custom clearable search components.
