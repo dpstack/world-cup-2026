@@ -34,17 +34,40 @@ export function OnboardingModal() {
           Para una experiencia más inmersiva, elige a tu selección favorita. La seguiremos de cerca en tu Mundial.
         </p>
 
-        <input
-          placeholder="Buscar un país..."
-          value={search} onChange={e => setSearch(e.target.value)}
-          style={{
-            width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 15, fontFamily: font, marginBottom: 16,
-            outline: 'none', boxSizing: 'border-box'
-          }}
-        />
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <input
+            role="searchbox"
+            maxLength={50}
+            aria-label="Buscar un país"
+            placeholder="Buscar un país..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 36px 12px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 15, fontFamily: font,
+              outline: 'none', boxSizing: 'border-box'
+            }}
+          />
+          {search && (
+            <button
+              aria-label="Limpiar búsqueda"
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                fontSize: 18, padding: '4px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
 
         <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, paddingBottom: 20, textAlign: 'left' }}>
+          {filtered.length === 0 && (
+            <div role="status" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 20, color: '#aaa', fontFamily: font }}>
+              No se encontraron países para "<span style={{ color: '#fff' }}>{search}</span>"
+            </div>
+          )}
           {filtered.map(c => {
             const isSelected = selected?.code === c.code;
             return (
