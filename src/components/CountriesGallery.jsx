@@ -265,21 +265,37 @@ export function CountriesGallery() {
       {/* Search + Filters */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 180 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, pointerEvents: 'none' }} aria-hidden="true">🔍</span>
           <input
             type="text"
+            role="searchbox"
+            maxLength={50}
+            aria-label={lang === 'es' ? 'Buscar país, código o capital' : 'Search country, code or capital'}
             placeholder={lang === 'es' ? 'País, código o capital…' : 'Country, code or capital…'}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
               width: '100%', boxSizing: 'border-box',
-              padding: '10px 12px 10px 36px',
+              padding: '10px 36px 10px 36px',
               background: 'rgba(255,255,255,0.05)',
               border: `1px solid ${search ? C.gold : 'rgba(255,255,255,0.1)'}`,
               borderRadius: 10, color: '#e0d8c8',
               fontFamily: font, fontSize: 13, outline: 'none', transition: 'border 0.2s',
             }}
           />
+          {search && (
+            <button
+              aria-label={lang === 'es' ? 'Limpiar búsqueda' : 'Clear search'}
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                fontSize: 16, padding: '4px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -345,8 +361,8 @@ export function CountriesGallery() {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#444', fontFamily: font }}>
-          No results for "<span style={{ color: '#666' }}>{search}</span>"
+        <div role="status" style={{ textAlign: 'center', padding: 60, color: '#aaa', fontFamily: font }}>
+          {lang === 'es' ? 'No se encontraron resultados para' : 'No results for'} "<span style={{ color: '#fff' }}>{search}</span>"
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
