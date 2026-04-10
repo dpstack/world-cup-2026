@@ -346,7 +346,8 @@ function ResultsScreen({ answers, score, difficulty, mode, flashCount, onRestart
       }
     }
   } catch (e) {
-    console.warn("localStorage highscore error", e);
+    // SECURITY: Do not log the raw error object (e) to prevent internal stack trace leakage.
+    console.warn("localStorage highscore error");
   }
   
   const recordMetric = mode === 'survival' ? correct : Math.round(score);

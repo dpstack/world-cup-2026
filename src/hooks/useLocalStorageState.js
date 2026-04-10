@@ -24,7 +24,8 @@ export function useLocalStorageState(key, initialValueFactory, validator) {
         }
       }
     } catch (e) {
-      console.warn("localStorage error", e);
+      // SECURITY: Do not log the raw error object (e) to prevent internal stack trace leakage.
+      console.warn("localStorage error");
     }
     return initialValue;
   });
