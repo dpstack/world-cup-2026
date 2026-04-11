@@ -48,7 +48,17 @@ export function compareTeams(a, b, tbA = 0, tbB = 0) {
   return (tbB || 0) - (tbA || 0);
 }
 
+const computeTableCache = new WeakMap();
+
 export function computeTable(teams, matches, tieBreakers = {}) {
+  const paramsKey = JSON.stringify({ teams, tieBreakers });
+  if (computeTableCache.has(matches)) {
+    const cached = computeTableCache.get(matches);
+    if (cached.paramsKey === paramsKey) {
+      return cached.result;
+    }
+  }
+
   const s = {};
   teams.forEach(t => { s[t] = { team: t, pj: 0, gf: 0, gc: 0, pts: 0 }; });
   matches.forEach(m => {
@@ -61,7 +71,10 @@ export function computeTable(teams, matches, tieBreakers = {}) {
     else if (g2 > g1) s[m.t2].pts += 3;
     else { s[m.t1].pts += 1; s[m.t2].pts += 1; }
   });
-  return Object.values(s).sort((a, b) => compareTeams(a, b, tieBreakers[a.team], tieBreakers[b.team]));
+  const result = Object.values(s).sort((a, b) => compareTeams(a, b, tieBreakers[a.team], tieBreakers[b.team]));
+
+  computeTableCache.set(matches, { paramsKey, result });
+  return result;
 }
 
 export function resolveWinner(t1, t2, g1, g2, p1, p2) {
