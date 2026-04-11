@@ -23,8 +23,8 @@ export function useLocalStorageState(key, initialValueFactory, validator) {
           }
         }
       }
-    } catch (e) {
-      console.warn("localStorage error", e);
+    } catch {
+      console.warn("localStorage error");
     }
     return initialValue;
   });
