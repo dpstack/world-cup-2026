@@ -1,0 +1,3 @@
+## 2024-05-24 - Empty States and Input Attributes
+**Learning:** Empty states require `role="status"` to ensure screen readers announce them proactively to the user when search results change. Text inputs used for heavy filtering must have a `maxLength` attribute to prevent client-side DoS from massive input strings crashing the browser. Also discovered some hardcoded English empty states ("No results for") in a Spanish-default application.
+**Action:** Next time I add or edit search functionality or empty states, I will always add `role="status"` to the empty state container, add `maxLength` to the input, and ensure the copy is correctly localized based on the user's language setting.
