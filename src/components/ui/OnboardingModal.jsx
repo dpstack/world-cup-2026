@@ -35,6 +35,9 @@ export function OnboardingModal() {
         </p>
 
         <input
+          type="text"
+          role="searchbox"
+          maxLength={50}
           placeholder="Buscar un país..."
           value={search} onChange={e => setSearch(e.target.value)}
           style={{
@@ -45,6 +48,11 @@ export function OnboardingModal() {
         />
 
         <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, paddingBottom: 20, textAlign: 'left' }}>
+          {filtered.length === 0 && search.length > 0 && (
+            <div role="status" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px', color: '#aaa', fontFamily: font }}>
+              No se encontraron países para "{search}"
+            </div>
+          )}
           {filtered.map(c => {
             const isSelected = selected?.code === c.code;
             return (
