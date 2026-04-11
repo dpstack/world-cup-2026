@@ -345,8 +345,8 @@ export function CountriesGallery() {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#444', fontFamily: font }}>
-          No results for "<span style={{ color: '#666' }}>{search}</span>"
+        <div role="status" style={{ textAlign: 'center', padding: 60, color: '#444', fontFamily: font }}>
+          {lang === 'es' ? 'No se encontraron resultados para ' : 'No results for '} "<span style={{ color: '#666' }}>{search}</span>"
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
