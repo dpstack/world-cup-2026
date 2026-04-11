@@ -45,6 +45,11 @@ export function OnboardingModal() {
         />
 
         <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, paddingBottom: 20, textAlign: 'left' }}>
+          {filtered.length === 0 && (
+            <div role="status" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: '#666', fontFamily: font, fontSize: 14 }}>
+              No se encontraron resultados para "{search}"
+            </div>
+          )}
           {filtered.map(c => {
             const isSelected = selected?.code === c.code;
             return (
