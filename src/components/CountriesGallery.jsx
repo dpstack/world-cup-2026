@@ -268,6 +268,7 @@ export function CountriesGallery() {
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
           <input
             type="text"
+            maxLength={100}
             placeholder={lang === 'es' ? 'País, código o capital…' : 'Country, code or capital…'}
             value={search}
             onChange={e => setSearch(e.target.value)}
