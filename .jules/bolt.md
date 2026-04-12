@@ -1,0 +1,3 @@
+## 2024-05-24 - React Immutable Array Caching with WeakMap
+**Learning:** Tournament matches are updated immutably in React state, changing their array reference on every update. This allows us to use a `WeakMap` keyed by the `matches` reference to cache expensive calculations like `computeTable`, instead of stringifying the entire matches array. However, we must still stringify other primitive/complex parameters (like `teams` or `tieBreakers`) as secondary keys to prevent cache misses on default arguments while avoiding memory leaks.
+**Action:** Whenever caching React derived data where a large object/array is immutable, use it as a `WeakMap` key. Store a nested `Map` keyed by a stringified representation of the remaining arguments.
