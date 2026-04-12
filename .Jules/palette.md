@@ -1,0 +1,3 @@
+## 2024-05-19 - Accessible Search Inputs and Empty States
+**Learning:** Adding custom clear buttons inside `<input type="search">` causes UI glitches in WebKit browsers which inject their own native clear button. Furthermore, empty state messages like "no results" are visually apparent but ignored by screen readers until focused.
+**Action:** Use `<input type="text" role="searchbox">` when adding custom clear buttons to avoid WebKit double-button bugs while preserving semantic accessibility. Additionally, wrap empty state messages in `<div role="status">` so screen readers proactively announce them.
