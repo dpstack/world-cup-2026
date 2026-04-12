@@ -37,6 +37,7 @@ export function OnboardingModal() {
         <input
           placeholder="Buscar un país..."
           value={search} onChange={e => setSearch(e.target.value)}
+          maxLength={50}
           style={{
             width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 15, fontFamily: font, marginBottom: 16,
