@@ -271,6 +271,7 @@ export function CountriesGallery() {
             placeholder={lang === 'es' ? 'País, código o capital…' : 'Country, code or capital…'}
             value={search}
             onChange={e => setSearch(e.target.value)}
+            maxLength={50}
             style={{
               width: '100%', boxSizing: 'border-box',
               padding: '10px 12px 10px 36px',

@@ -1,0 +1,4 @@
+## 2024-05-24 - DoS vulnerability due to unrestricted text inputs used for filtering
+**Vulnerability:** Text inputs (`<input type="text">`) that pass the `search` string to heavy operations like array `.includes()` had no length limits.
+**Learning:** Massive input strings provided by malicious users (or bots) can crash the browser tab (client-side DoS) due to excessive memory or processing time needed to filter large arrays with large search strings, specifically since the project filters using `search.toLowerCase().trim()`.
+**Prevention:** Always ensure that text inputs used for searching or filtering arrays have a reasonable `maxLength` attribute to prevent the browser from processing overly massive strings.
