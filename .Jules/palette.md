@@ -1,0 +1,3 @@
+## 2023-10-27 - [Clear Search Input & Empty State Accessibility]
+**Learning:** Adding a custom clear button inside a text input is a great micro-UX pattern, but requires careful padding adjustments (e.g., `paddingRight: 36px`) on the input to prevent text overlap. Empty states (like "No results found") often fail silently for screen reader users; wrapping them in an element with `role="status"` is a critical, easy fix to proactively announce changes.
+**Action:** When adding custom absolute-positioned elements inside inputs, always verify and adjust text padding. Always add `role="status"` to dynamic empty state messages across the application.
